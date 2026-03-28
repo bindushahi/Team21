@@ -7,6 +7,7 @@ import {
   getInterventions,
   analyzeRisk,
   getConversationStarters,
+  getWatchlist,
 } from "../api";
 import {
   ArrowLeft,
@@ -14,7 +15,6 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
-  AlertTriangle,
   Loader2,
 } from "lucide-react";
 import {
@@ -27,13 +27,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const RISK_STYLE = {
-  low: "bg-emerald-50 text-emerald-700",
-  moderate: "bg-amber-50 text-amber-700",
-  high: "bg-red-50 text-red-700",
-  crisis: "bg-red-100 text-red-800",
-};
-
+// Tag labels
 const TAG_LABELS = {
   grade_drop: "Grade drop",
   distracted: "Distracted",
@@ -43,6 +37,22 @@ const TAG_LABELS = {
   tearful: "Tearful",
 };
 
+// Risk alert component
+function RiskAlert({ level }) {
+  const colors =
+    level === "high" || level === "crisis"
+      ? "bg-red-50 border-red-500 text-red-700 animate-pulse"
+      : "bg-yellow-50 border-yellow-500 text-yellow-700 animate-pulse";
+
+  return (
+    <div className={`p-4 rounded-xl mb-6 border-l-4 ${colors} shadow-md`}>
+      <p className="text-sm font-medium">
+        This student may be experiencing distress. Consider follow-up.
+      </p>
+    </div>
+  );
+}
+
 export default function StudentProfile() {
   const { id } = useParams();
   const [student, setStudent] = useState(null);
@@ -51,21 +61,25 @@ export default function StudentProfile() {
   const [interventions, setInterventions] = useState([]);
   const [analysis, setAnalysis] = useState(null);
   const [starters, setStarters] = useState(null);
+  const [watchlist, setWatchlist] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingStarters, setLoadingStarters] = useState(false);
 
   useEffect(() => {
+    // fetch student + checkins + observations + interventions + watchlist
     Promise.all([
       getStudent(id),
       getStudentCheckins(id),
       getObservations(id),
       getInterventions(id),
+      getWatchlist(),
     ])
-      .then(([s, c, o, i]) => {
+      .then(([s, c, o, i, w]) => {
         setStudent(s);
         setCheckins(c);
         setObservations(o);
         setInterventions(i);
+        setWatchlist(w);
       })
       .catch(console.error);
   }, [id]);
@@ -76,7 +90,7 @@ export default function StudentProfile() {
       const result = await analyzeRisk(id);
       setAnalysis(result);
     } catch (err) {
-      console.error("Risk analysis failed:", err);
+      console.error(err);
     } finally {
       setLoadingAI(false);
     }
@@ -88,7 +102,7 @@ export default function StudentProfile() {
       const result = await getConversationStarters(id);
       setStarters(result);
     } catch (err) {
-      console.error("Conversation starters failed:", err);
+      console.error(err);
     } finally {
       setLoadingStarters(false);
     }
@@ -102,6 +116,18 @@ export default function StudentProfile() {
     );
   }
 
+  // Risk level from AI or rule-based
+  const riskLevel =
+    analysis?.ai_assessment?.risk_level ||
+    analysis?.rule_based?.risk_level ||
+    "low";
+
+  // Check if the student is in the watchlist
+  const onWatchlist = watchlist.some(
+    (w) => w.id === student.id || w.name === student.name
+  );
+
+  // Prepare chart data
   const chartData = checkins.map((c) => ({
     date: c.date.slice(5),
     mood: c.mood,
@@ -128,43 +154,49 @@ export default function StudentProfile() {
   const TrendIcon = trendIcon;
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 font-sans">
+      {/* Back Link */}
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-6"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-6"
       >
         <ArrowLeft size={16} />
         Back to dashboard
       </Link>
 
-      <div className="flex items-start justify-between mb-8">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {student.name}
-          </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Class {student.class} &middot; Age {student.age}
+          <h1 className="text-3xl font-bold text-gray-900">{student.name}</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Class {student.class} · Age {student.age}
           </p>
         </div>
         <button
           onClick={runAnalysis}
           disabled={loadingAI}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
           {loadingAI && <Loader2 size={14} className="animate-spin" />}
           {loadingAI ? "Analyzing..." : "Run AI Analysis"}
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+      {/* Risk Alert - ONLY if student is on watchlist and risk moderate/high/crisis */}
+      {onWatchlist &&
+        ["moderate", "high", "crisis"].includes(riskLevel) && (
+          <RiskAlert level={riskLevel} />
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
           <p className="text-xs text-gray-400 mb-1">Recent Avg. Mood</p>
-          <p className="text-2xl font-semibold text-gray-900">
-            {avgRecent}
-            <span className="text-gray-300 text-base font-normal"> / 5</span>
+          <p className="text-2xl font-bold text-gray-900">
+            {avgRecent} <span className="text-gray-300 text-base font-normal">/ 5</span>
           </p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
           <p className="text-xs text-gray-400 mb-1">Trend</p>
           <div className="flex items-center gap-2">
             <TrendIcon size={20} className="text-gray-500" />
@@ -172,24 +204,21 @@ export default function StudentProfile() {
               {TrendIcon === TrendingDown
                 ? "Declining"
                 : TrendIcon === TrendingUp
-                  ? "Improving"
-                  : "Stable"}
+                ? "Improving"
+                : "Stable"}
             </span>
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
           <p className="text-xs text-gray-400 mb-1">Check-ins (14d)</p>
-          <p className="text-2xl font-semibold text-gray-900">
-            {checkins.length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900">{checkins.length}</p>
         </div>
       </div>
 
+      {/* Mood Chart */}
       {chartData.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 mb-8">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">
-            Mood History
-          </h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Mood History</h2>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
@@ -218,126 +247,20 @@ export default function StudentProfile() {
               <Line
                 type="monotone"
                 dataKey="mood"
-                stroke="#111827"
-                strokeWidth={2}
-                dot={{ fill: "#111827", r: 3 }}
-                activeDot={{ r: 5 }}
+                stroke="#4F46E5"
+                strokeWidth={3}
+                dot={{ r: 5, fill: "#4F46E5" }}
+                activeDot={{ r: 7 }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {analysis && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 mb-8">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">
-            AI Risk Assessment
-          </h2>
-
-          {analysis.ai_assessment ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                    RISK_STYLE[analysis.ai_assessment.risk_level] ||
-                    "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {analysis.ai_assessment.risk_level} risk
-                </span>
-                <span className="text-xs text-gray-400">
-                  Confidence:{" "}
-                  {Math.round(analysis.ai_assessment.confidence * 100)}%
-                </span>
-              </div>
-
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {analysis.ai_assessment.signal_summary}
-              </p>
-
-              {analysis.ai_assessment.primary_concerns?.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-gray-400 mb-2">
-                    Concerns
-                  </p>
-                  <ul className="space-y-1">
-                    {analysis.ai_assessment.primary_concerns.map((c, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-sm text-gray-600"
-                      >
-                        <AlertTriangle
-                          size={14}
-                          className="text-gray-300 mt-0.5 shrink-0"
-                        />
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-gray-100">
-                <p className="text-xs font-medium text-gray-400 mb-1">
-                  Recommended Action
-                </p>
-                <p className="text-sm text-gray-700">
-                  {analysis.ai_assessment.recommended_action}
-                </p>
-              </div>
-
-              {analysis.ai_assessment.reasoning && (
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs font-medium text-gray-400 mb-1">
-                    Reasoning
-                  </p>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    {analysis.ai_assessment.reasoning}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                AI analysis unavailable — showing rule-based assessment
-              </p>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                    RISK_STYLE[analysis.rule_based?.risk_level] ||
-                    "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {analysis.rule_based?.risk_level} risk
-                </span>
-              </div>
-              {analysis.rule_based?.concerns?.length > 0 && (
-                <ul className="space-y-1">
-                  {analysis.rule_based.concerns.map((c, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-gray-600"
-                    >
-                      <AlertTriangle
-                        size={14}
-                        className="text-gray-300 mt-0.5 shrink-0"
-                      />
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="bg-white border border-gray-200 rounded-lg p-5 mb-8">
+      {/* Conversation Starters */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-gray-900">
-            Conversation Starters
-          </h2>
+          <h2 className="text-sm font-semibold text-gray-900">Conversation Starters</h2>
           <button
             onClick={loadStarters}
             disabled={loadingStarters}
@@ -350,10 +273,7 @@ export default function StudentProfile() {
         {starters?.starters ? (
           <div className="space-y-3">
             {starters.starters.map((s, i) => (
-              <div
-                key={i}
-                className="p-3 bg-gray-50 rounded-lg"
-              >
+              <div key={i} className="p-3 bg-indigo-50 rounded-lg">
                 <p className="text-sm text-gray-900">{s.nepali}</p>
                 <p className="text-xs text-gray-500 mt-1">{s.english}</p>
               </div>
@@ -361,92 +281,67 @@ export default function StudentProfile() {
           </div>
         ) : (
           <p className="text-sm text-gray-400">
-            Click Generate to get AI-powered conversation openers for this
-            student.
+            Click Generate to get AI-powered conversation openers for this student.
           </p>
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-5 mb-8">
-        <h2 className="text-sm font-medium text-gray-900 mb-4">
-          Recent Check-ins
-        </h2>
+      {/* Recent Check-ins */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">Recent Check-ins</h2>
         <div className="space-y-2">
-          {checkins
-            .slice()
-            .reverse()
-            .slice(0, 10)
-            .map((c) => (
-              <div
-                key={c.id}
-                className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0"
-              >
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-700">
-                      Mood: {c.mood}/5
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      Energy: {c.energy}
-                    </span>
-                  </div>
-                  {c.note && (
-                    <p className="text-sm text-gray-500 mt-1">{c.note}</p>
-                  )}
+          {checkins.slice().reverse().slice(0, 10).map((c) => (
+            <div
+              key={c.id}
+              className="flex items-start justify-between py-2 px-3 border rounded-lg border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700">Mood: {c.mood}/5</span>
+                  <span className="text-xs text-gray-400">Energy: {c.energy}</span>
                 </div>
-                <span className="text-xs text-gray-400 whitespace-nowrap ml-4">
-                  {c.date}
-                </span>
+                {c.note && <p className="text-sm text-gray-500 mt-1">{c.note}</p>}
               </div>
-            ))}
+              <span className="text-xs text-gray-400 whitespace-nowrap ml-4">{c.date}</span>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Teacher Observations */}
       {observations.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 mb-8">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">
-            Teacher Observations
-          </h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Teacher Observations</h2>
           <div className="space-y-3">
             {observations.map((o) => (
               <div key={o.id} className="py-2 border-b border-gray-50 last:border-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-700">
-                    {o.teacher}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{o.teacher}</span>
                   <span className="text-xs text-gray-400">{o.date}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-1">
                   {o.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full"
-                    >
+                    <span key={t} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
                       {TAG_LABELS[t] || t}
                     </span>
                   ))}
                 </div>
-                {o.note && (
-                  <p className="text-sm text-gray-500">{o.note}</p>
-                )}
+                {o.note && <p className="text-sm text-gray-500">{o.note}</p>}
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {/* Interventions */}
       {interventions.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">
-            Interventions
-          </h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg transition-transform hover:-translate-y-1">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Interventions</h2>
           <div className="space-y-3">
             {interventions.map((i) => (
               <div key={i.id} className="py-2 border-b border-gray-50 last:border-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-700">
-                    {i.counselor}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">{i.counselor}</span>
                   <span className="text-xs text-gray-400">{i.date}</span>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
