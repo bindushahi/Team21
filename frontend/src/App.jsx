@@ -13,15 +13,20 @@ export default function App() {
   const [studentId, setStudentId] = useState(null);
 
   if (!role) {
-    return (
+  return (
+    <div
+      className="min-h-screen bg-gray-50/60 flex flex-col items-center justify-center bg-cover bg-center px-6 py-8"
+      style={{ backgroundImage: "linear-gradient(rgba(106, 45, 45, 0), rgba(255, 255, 255, 0.21)), url('/LandingBg.png')" }}
+    >
       <RoleSelect
         onSelect={(r, sid) => {
           setRole(r);
           if (sid) setStudentId(sid);
         }}
       />
-    );
-  }
+    </div>
+  );
+}
 
   const homeRoute =
     role === "student"
