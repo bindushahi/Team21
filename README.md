@@ -51,7 +51,7 @@ Open http://localhost:5173 and select a role to get started.
 
 ## API Documentation
 
-With the backend running, visit http://localhost:8000/docs for the full Swagger UI.
+With the backend running, visit http://localhost:8000/docs
 
 ## Data
 
