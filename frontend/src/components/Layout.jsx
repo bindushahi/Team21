@@ -62,7 +62,8 @@ export default function Layout({ role, userName, userEmail, onSignOut, onSwitchA
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/50 backdrop-blur-xl border-r border-white/30 flex flex-col shadow-xl shadow-indigo-100/40">
+      <div className="h-full w-64"></div>
+      <aside className="fixed h-screen overflow-hidden w-64 bg-white/50 backdrop-blur-xl border-r border-white/30 flex flex-col shadow-xl shadow-indigo-100/40">
         {/* Logo / Role */}
         <div className="px-6 pt-6 pb-4">
           <h1 className="text-lg font-bold text-gray-900 tracking-tight drop-shadow-sm">
