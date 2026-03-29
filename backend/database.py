@@ -7,13 +7,24 @@ from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy import (
-    create_engine, Column, String, Integer, Float, Boolean, Text,
-    ForeignKey, UniqueConstraint, CheckConstraint,
+    create_engine,
+    Column,
+    String,
+    Integer,
+    Float,
+    Boolean,
+    Text,
+    ForeignKey,
+    UniqueConstraint,
+    CheckConstraint,
+    DateTime
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 DB_PATH = Path(__file__).parent / "hamro.db"
-engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
+engine = create_engine(
+    f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
@@ -181,4 +192,43 @@ class ClassSchedule(Base):
     end_time = Column(String, nullable=False)
 
 
+class ConfessionPost(Base):
+    __tablename__ = "confession_posts"
+    id = Column(String, primary_key=True)
+    author = Column(String, nullable=False)
+    title = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    tag = Column(String(50), nullable=False, default="general")
+    likes = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    comments = relationship(
+        "Comment", back_populates="post", cascade="all, delete-orphan", lazy="joined"
+    )
+    liked_by = relationship(
+        "PostLike", back_populates="post", cascade="all, delete-orphan", lazy="joined"
+    )
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+    id = Column(String, primary_key=True)
+    post_id = Column(String, ForeignKey("confession_posts.id"), nullable=False)
+    author = Column(String, nullable=False)
+    text = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    post = relationship("ConfessionPost", back_populates="comments")
+
+
+class PostLike(Base):
+    __tablename__ = "post_likes"
+    id = Column(String, primary_key=True)
+    post_id = Column(String, ForeignKey("confession_posts.id"), nullable=False)
+    session_id = Column(String, nullable=False)  # browser localStorage token
+
+    post = relationship("ConfessionPost", back_populates="liked_by")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 Base.metadata.create_all(bind=engine)

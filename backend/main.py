@@ -3,6 +3,7 @@
 Run with: uvicorn main:app --reload
 """
 
+from routes.ConfessionRoutes import router as ConfessionRouter
 from datetime import date, datetime
 from uuid import uuid4
 
@@ -12,25 +13,49 @@ from sqlalchemy.orm import Session
 
 from database import get_db, User, Class, ClassTeacher, ClassSchedule
 from auth import (
-    hash_password, verify_password, create_token, decode_token,
-    send_otp, check_otp,
-    get_current_user, require_auth, require_elevated, require_role,
+    hash_password,
+    verify_password,
+    create_token,
+    decode_token,
+    send_otp,
+    check_otp,
+    get_current_user,
+    require_auth,
+    require_elevated,
+    require_role,
     oauth2_scheme,
 )
 from models import (
-    RegisterRequest, LoginRequest, VerifyOtpRequest, ElevateOtpRequest,
-    ApproveRequest, AssignClassRequest,
-    CheckinRequest, ObservationRequest, InterventionRequest,
+    RegisterRequest,
+    LoginRequest,
+    VerifyOtpRequest,
+    ElevateOtpRequest,
+    ApproveRequest,
+    AssignClassRequest,
+    CheckinRequest,
+    ObservationRequest,
+    InterventionRequest,
 )
 from data import (
-    get_students, get_student, get_checkins, add_checkin, get_all_checkins,
-    get_students_by_class, get_observations, add_observation,
-    get_interventions, add_intervention, get_buddy_for_student,
+    get_students,
+    get_student,
+    get_checkins,
+    add_checkin,
+    get_all_checkins,
+    get_students_by_class,
+    get_observations,
+    add_observation,
+    get_interventions,
+    add_intervention,
+    get_buddy_for_student,
 )
 from patterns import (
-    detect_risk_level, compute_baseline_mood,
-    compute_checkin_frequency, compute_mood_trend,
-    count_consecutive_low, compute_risk_score,
+    detect_risk_level,
+    compute_baseline_mood,
+    compute_checkin_frequency,
+    compute_mood_trend,
+    count_consecutive_low,
+    compute_risk_score,
 )
 from ai import call_ai
 
@@ -64,7 +89,10 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     )
     db.add(user)
     db.commit()
-    return {"message": "Registration submitted. Awaiting admin approval.", "user_id": user.id}
+    return {
+        "message": "Registration submitted. Awaiting admin approval.",
+        "user_id": user.id,
+    }
 
 
 @app.post("/api/auth/login")
@@ -94,7 +122,9 @@ def verify_login_otp(req: VerifyOtpRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "User not found")
 
-    if not check_otp(user.id, req.otp, phone_number=user.phone_number or "", purpose="login"):
+    if not check_otp(
+        user.id, req.otp, phone_number=user.phone_number or "", purpose="login"
+    ):
         raise HTTPException(401, "Invalid or expired OTP")
 
     token = create_token(user.id, user.role, elevated=False)
@@ -126,7 +156,9 @@ def request_elevate(user: User = Depends(require_auth)):
 @app.post("/api/auth/verify-elevate")
 def verify_elevate(req: ElevateOtpRequest, user: User = Depends(require_auth)):
     """Verify elevation OTP and issue a new token with elevated=true."""
-    if not check_otp(user.id, req.otp, phone_number=user.phone_number or "", purpose="elevate"):
+    if not check_otp(
+        user.id, req.otp, phone_number=user.phone_number or "", purpose="elevate"
+    ):
         raise HTTPException(401, "Invalid or expired OTP")
 
     token = create_token(user.id, user.role, elevated=True)
@@ -159,7 +191,13 @@ def admin_pending_users(
 ):
     rows = db.query(User).filter(User.status == "pending").all()
     return [
-        {"id": u.id, "email": u.email, "full_name": u.full_name, "role": u.role, "created_at": u.created_at}
+        {
+            "id": u.id,
+            "email": u.email,
+            "full_name": u.full_name,
+            "role": u.role,
+            "created_at": u.created_at,
+        }
         for u in rows
     ]
 
@@ -176,10 +214,16 @@ def admin_all_users(
         if u.role == "teacher":
             ct = db.query(ClassTeacher).filter(ClassTeacher.user_id == u.id).all()
             assigned = [r.class_id for r in ct]
-        result.append({
-            "id": u.id, "email": u.email, "full_name": u.full_name,
-            "role": u.role, "status": u.status, "assigned_classes": assigned,
-        })
+        result.append(
+            {
+                "id": u.id,
+                "email": u.email,
+                "full_name": u.full_name,
+                "role": u.role,
+                "status": u.status,
+                "assigned_classes": assigned,
+            }
+        )
     return result
 
 
@@ -226,10 +270,14 @@ def admin_assign_class(
     if not cls:
         raise HTTPException(404, "Class not found")
 
-    existing = db.query(ClassTeacher).filter(
-        ClassTeacher.user_id == req.user_id,
-        ClassTeacher.class_id == req.class_id,
-    ).first()
+    existing = (
+        db.query(ClassTeacher)
+        .filter(
+            ClassTeacher.user_id == req.user_id,
+            ClassTeacher.class_id == req.class_id,
+        )
+        .first()
+    )
     if existing:
         return {"message": "Already assigned"}
 
@@ -268,16 +316,18 @@ def list_students(user: User = Depends(require_auth), db: Session = Depends(get_
         risk = detect_risk_level(s["id"])
         score_data = compute_risk_score(s["id"])
         last_checkin = checkins[-1] if checkins else None
-        result.append({
-            **s,
-            "last_mood": last_checkin["mood"] if last_checkin else None,
-            "last_energy": last_checkin["energy"] if last_checkin else None,
-            "last_checkin_date": last_checkin["date"] if last_checkin else None,
-            "risk_level": risk["risk_level"],
-            "concerns": risk["concerns"],
-            "risk_score": score_data["risk_score"],
-            "why_flagged": score_data["why_flagged"],
-        })
+        result.append(
+            {
+                **s,
+                "last_mood": last_checkin["mood"] if last_checkin else None,
+                "last_energy": last_checkin["energy"] if last_checkin else None,
+                "last_checkin_date": last_checkin["date"] if last_checkin else None,
+                "risk_level": risk["risk_level"],
+                "concerns": risk["concerns"],
+                "risk_score": score_data["risk_score"],
+                "why_flagged": score_data["why_flagged"],
+            }
+        )
     return result
 
 
@@ -295,9 +345,17 @@ def list_checkins(student_id: str, days: int = 14, user: User = Depends(require_
 
 
 CRISIS_KEYWORDS = [
-    "मर्न मन लाग्छ", "बाँच्न मन छैन", "आत्महत्या", "suicide",
-    "self harm", "self-harm", "kill myself", "don't want to live",
-    "end my life", "मर्छु", "जीवन सकाउने",
+    "मर्न मन लाग्छ",
+    "बाँच्न मन छैन",
+    "आत्महत्या",
+    "suicide",
+    "self harm",
+    "self-harm",
+    "kill myself",
+    "don't want to live",
+    "end my life",
+    "मर्छु",
+    "जीवन सकाउने",
 ]
 
 
@@ -309,10 +367,14 @@ def _is_within_class_time(class_name: str, db: Session) -> bool:
     now = datetime.now()
     current_time = now.strftime("%H:%M")
 
-    schedules = db.query(ClassSchedule).filter(
-        ClassSchedule.class_id == cls.id,
-        ClassSchedule.day_of_week == now.weekday(),
-    ).all()
+    schedules = (
+        db.query(ClassSchedule)
+        .filter(
+            ClassSchedule.class_id == cls.id,
+            ClassSchedule.day_of_week == now.weekday(),
+        )
+        .all()
+    )
 
     if not schedules:
         return True
@@ -378,7 +440,9 @@ async def create_checkin(
             "student_id": req.student_id,
             "student_name": student["name"] if student else req.student_id,
             "student_class": student["class"] if student else "",
-            "trigger": "keyword_detected" if any(kw.lower() in note_lower for kw in CRISIS_KEYWORDS) else "pattern_detected",
+            "trigger": "keyword_detected"
+            if any(kw.lower() in note_lower for kw in CRISIS_KEYWORDS)
+            else "pattern_detected",
             "mood": req.mood,
             "note_preview": req.note[:100] if req.note else "",
             "timestamp": datetime.now().isoformat(),
@@ -442,12 +506,14 @@ def watchlist(user: User = Depends(require_elevated)):
         if risk["risk_level"] in ("moderate", "high", "crisis"):
             checkins = get_checkins(s["id"], days=14)
             last = checkins[-1] if checkins else None
-            flagged.append({
-                **s,
-                "last_mood": last["mood"] if last else None,
-                "last_checkin_date": last["date"] if last else None,
-                "risk": risk,
-            })
+            flagged.append(
+                {
+                    **s,
+                    "last_mood": last["mood"] if last else None,
+                    "last_checkin_date": last["date"] if last else None,
+                    "risk": risk,
+                }
+            )
     order = {"crisis": 0, "high": 1, "moderate": 2}
     flagged.sort(key=lambda f: order.get(f["risk"]["risk_level"], 3))
     return flagged
@@ -468,7 +534,9 @@ async def analyze_risk(student_id: str, user: User = Depends(require_elevated)):
     trend = compute_mood_trend(recent_checkins)
 
     last_3 = recent_checkins[-3:] if recent_checkins else []
-    current_avg = round(sum(c["mood"] for c in last_3) / len(last_3), 2) if last_3 else 0
+    current_avg = (
+        round(sum(c["mood"] for c in last_3) / len(last_3), 2) if last_3 else 0
+    )
 
     signal_bundle = {
         "student": {
@@ -490,12 +558,15 @@ async def analyze_risk(student_id: str, user: User = Depends(require_elevated)):
             "current_mood_avg_last3": current_avg,
             "baseline_deviation": round(baseline - current_avg, 2) if baseline else 0,
             "mood_trend": trend,
-            "consecutive_low_days": detect_risk_level(student_id)["consecutive_low_days"],
+            "consecutive_low_days": detect_risk_level(student_id)[
+                "consecutive_low_days"
+            ],
             "total_checkins_60d": len(all_checkins),
         },
         "notes": [
             {"date": c["date"], "text": c["note"]}
-            for c in all_checkins if c.get("note")
+            for c in all_checkins
+            if c.get("note")
         ],
         "teacher_observations": observations,
         "checkin_frequency": frequency,
@@ -504,11 +575,17 @@ async def analyze_risk(student_id: str, user: User = Depends(require_elevated)):
 
     rule_based = detect_risk_level(student_id)
     ai_assessment = await call_ai("risk_assessment", signal_bundle)
-    return {"student_id": student_id, "rule_based": rule_based, "ai_assessment": ai_assessment}
+    return {
+        "student_id": student_id,
+        "rule_based": rule_based,
+        "ai_assessment": ai_assessment,
+    }
 
 
 @app.post("/api/generate/conversation-starters/{student_id}")
-async def conversation_starters(student_id: str, user: User = Depends(require_elevated)):
+async def conversation_starters(
+    student_id: str, user: User = Depends(require_elevated)
+):
     student = get_student(student_id)
     if not student:
         raise HTTPException(404, "Student not found")
@@ -516,7 +593,11 @@ async def conversation_starters(student_id: str, user: User = Depends(require_el
     checkins = get_checkins(student_id, days=7)
     observations = get_observations(student_id)
     context = {
-        "student": {"name": student["name"], "age": student["age"], "class": student["class"]},
+        "student": {
+            "name": student["name"],
+            "age": student["age"],
+            "class": student["class"],
+        },
         "recent_moods": [c["mood"] for c in checkins],
         "recent_notes": [c["note"] for c in checkins if c.get("note")],
         "observations": observations,
@@ -540,7 +621,9 @@ async def creative_task(student_id: str, user: User = Depends(require_auth)):
 
     def profile(s):
         return {
-            "name": s["name"], "age": s["age"], "class": s["class"],
+            "name": s["name"],
+            "age": s["age"],
+            "class": s["class"],
             "gender": s.get("gender"),
             "interests": s.get("interests", []),
             "strengths": s.get("strengths", []),
@@ -565,7 +648,11 @@ async def parent_message(student_id: str, user: User = Depends(require_elevated)
     checkins = get_checkins(student_id, days=7)
     observations = get_observations(student_id)
     context = {
-        "student": {"name": student["name"], "age": student["age"], "class": student["class"]},
+        "student": {
+            "name": student["name"],
+            "age": student["age"],
+            "class": student["class"],
+        },
         "recent_moods": [c["mood"] for c in checkins],
         "observations": observations,
     }
@@ -608,21 +695,29 @@ def analytics_by_class(user: User = Depends(require_role("counselor", "admin")))
 
     result = []
     for cn, info in sorted(classes.items()):
-        class_checkins = [c for c in all_checkins if c["student_id"] in info["student_ids"]]
-        avg_mood = round(sum(c["mood"] for c in class_checkins) / len(class_checkins), 2) if class_checkins else 0
+        class_checkins = [
+            c for c in all_checkins if c["student_id"] in info["student_ids"]
+        ]
+        avg_mood = (
+            round(sum(c["mood"] for c in class_checkins) / len(class_checkins), 2)
+            if class_checkins
+            else 0
+        )
 
         risk_counts = {"low": 0, "moderate": 0, "high": 0, "crisis": 0}
         for s in info["students"]:
             r = detect_risk_level(s["id"])
             risk_counts[r["risk_level"]] = risk_counts.get(r["risk_level"], 0) + 1
 
-        result.append({
-            "class": cn,
-            "student_count": len(info["students"]),
-            "avg_mood": avg_mood,
-            "checkin_count": len(class_checkins),
-            "risk_distribution": risk_counts,
-        })
+        result.append(
+            {
+                "class": cn,
+                "student_count": len(info["students"]),
+                "avg_mood": avg_mood,
+                "checkin_count": len(class_checkins),
+                "risk_distribution": risk_counts,
+            }
+        )
     return result
 
 
@@ -670,22 +765,28 @@ def all_class_trends():
 
         # daily mood averages for the class (last 14 days)
         from collections import defaultdict
+
         daily: dict[str, list[int]] = defaultdict(list)
         for c in cks:
             daily[c["date"]].append(c["mood"])
         daily_avg = sorted(
-            [{"date": d, "avg_mood": round(sum(m) / len(m), 2)} for d, m in daily.items()],
+            [
+                {"date": d, "avg_mood": round(sum(m) / len(m), 2)}
+                for d, m in daily.items()
+            ],
             key=lambda x: x["date"],
         )[-14:]
 
-        results.append({
-            "class": class_name,
-            "student_count": len(class_students),
-            "avg_mood": avg_mood,
-            "total_checkins": len(cks),
-            "risk_counts": risk_counts,
-            "daily_avg": daily_avg,
-        })
+        results.append(
+            {
+                "class": class_name,
+                "student_count": len(class_students),
+                "avg_mood": avg_mood,
+                "total_checkins": len(cks),
+                "risk_counts": risk_counts,
+                "daily_avg": daily_avg,
+            }
+        )
     return results
 
 
@@ -726,15 +827,17 @@ def top_at_risk(limit: int = 10, user: User = Depends(require_auth)):
         score_data = compute_risk_score(s["id"])
         checkins = get_checkins(s["id"], days=14)
         last = checkins[-1] if checkins else None
-        scored.append({
-            "id": s["id"],
-            "name": s["name"],
-            "class": s["class"],
-            "risk_score": score_data["risk_score"],
-            "why_flagged": score_data["why_flagged"],
-            "last_mood": last["mood"] if last else None,
-            "last_checkin_date": last["date"] if last else None,
-        })
+        scored.append(
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "class": s["class"],
+                "risk_score": score_data["risk_score"],
+                "why_flagged": score_data["why_flagged"],
+                "last_mood": last["mood"] if last else None,
+                "last_checkin_date": last["date"] if last else None,
+            }
+        )
     scored.sort(key=lambda x: x["risk_score"], reverse=True)
     return scored[:limit]
 
@@ -755,21 +858,39 @@ def export_students_csv(user: User = Depends(require_auth)):
     students = get_students()
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "ID", "Name", "Class", "Age", "Gender",
-        "Risk Score", "Why Flagged", "Risk Level",
-        "Last Mood", "Last Check-in Date",
-    ])
+    writer.writerow(
+        [
+            "ID",
+            "Name",
+            "Class",
+            "Age",
+            "Gender",
+            "Risk Score",
+            "Why Flagged",
+            "Risk Level",
+            "Last Mood",
+            "Last Check-in Date",
+        ]
+    )
     for s in students:
         risk = detect_risk_level(s["id"])
         score_data = compute_risk_score(s["id"])
         checkins = get_checkins(s["id"], days=14)
         last = checkins[-1] if checkins else None
-        writer.writerow([
-            s["id"], s["name"], s["class"], s.get("age", ""), s.get("gender", ""),
-            score_data["risk_score"], score_data["why_flagged"], risk["risk_level"],
-            last["mood"] if last else "", last["date"] if last else "",
-        ])
+        writer.writerow(
+            [
+                s["id"],
+                s["name"],
+                s["class"],
+                s.get("age", ""),
+                s.get("gender", ""),
+                score_data["risk_score"],
+                score_data["why_flagged"],
+                risk["risk_level"],
+                last["mood"] if last else "",
+                last["date"] if last else "",
+            ]
+        )
 
     output.seek(0)
     return StreamingResponse(
@@ -778,3 +899,5 @@ def export_students_csv(user: User = Depends(require_auth)):
         headers={"Content-Disposition": "attachment; filename=students_report.csv"},
     )
 
+
+app.include_router(ConfessionRouter)
