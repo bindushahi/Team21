@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { loginUser, verifyOtp } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { Eye, EyeOff, ArrowRight, Shield } from "lucide-react";
 
 export default function Login({ onSwitch }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [otp, setOtp] = useState("");
   const [userId, setUserId] = useState(null);
   const [sentVia, setSentVia] = useState(null);
@@ -43,132 +45,224 @@ export default function Login({ onSwitch }) {
     }
   }
 
+  const cardStyle = {
+    background: "#fff",
+    borderRadius: 20,
+    padding: "40px 36px",
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow-lg)",
+    width: "100%",
+    maxWidth: 400,
+  };
+
   if (userId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              Enter OTP
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {sentVia === "sms"
-                ? "A 6-digit code has been sent to your phone"
-                : "A 6-digit code has been generated for you"}
+      <AuthShell>
+        <div style={cardStyle} className="animate-scale-in">
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: 16,
+              background: "var(--saffron-light)", border: "1px solid rgba(224,123,57,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 16px",
+            }}>
+              <Shield size={22} color="var(--saffron)" strokeWidth={1.8} />
+            </div>
+            <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 500, color: "var(--ink)", marginBottom: 6 }}>
+              Verify your identity
+            </h2>
+            <p style={{ fontSize: 13.5, color: "var(--ink-faint)", lineHeight: 1.5 }}>
+              {sentVia === "sms" ? "A 6-digit code has been sent to your phone." : "A 6-digit code has been generated below."}
             </p>
           </div>
 
-          {sentVia === "sms" && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mb-4">
-              <p className="text-xs text-emerald-700">
-                Check your phone for the SMS verification code
-              </p>
-            </div>
-          )}
-
           {demoOtp && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-              <p className="text-xs text-amber-700">
-                Demo mode — your OTP is: <span className="font-mono font-bold">{demoOtp}</span>
-              </p>
+            <div style={{
+              background: "var(--amber-light)", border: "1px solid rgba(146,64,14,0.15)",
+              borderRadius: 10, padding: "10px 14px", marginBottom: 20,
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{ fontSize: 12, color: "var(--amber)" }}>Demo mode — your OTP is:</span>
+              <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 15, color: "var(--amber)", letterSpacing: "0.1em" }}>{demoOtp}</span>
             </div>
           )}
 
-          <form onSubmit={handleOtp} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                autoFocus
-                className="w-full px-3 py-3 border border-gray-200 rounded-lg text-center text-lg font-mono tracking-widest focus:outline-none focus:border-gray-400"
-                placeholder="000000"
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || otp.length < 6}
-              className="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Verifying..." : "Verify"}
-            </button>
+          <form onSubmit={handleOtp} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <input
+              type="text"
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+              maxLength={6}
+              autoFocus
+              placeholder="000000"
+              style={{
+                width: "100%", padding: "14px 16px",
+                border: "1.5px solid var(--border-strong)",
+                borderRadius: 12,
+                textAlign: "center",
+                fontSize: 22,
+                fontFamily: "monospace",
+                letterSpacing: "0.3em",
+                fontWeight: 600,
+                color: "var(--ink)",
+                background: "var(--cream)",
+              }}
+            />
+            {error && <ErrorBanner msg={error} />}
+            <Btn loading={loading} disabled={otp.length < 6}>Verify code</Btn>
           </form>
 
-          <p className="text-center text-sm text-gray-400 mt-6">
-            <button
-              onClick={() => { setUserId(null); setOtp(""); setDemoOtp(null); setSentVia(null); setError(""); }}
-              className="text-gray-600 hover:underline"
-            >
-              Back to sign in
-            </button>
-          </p>
+          <button
+            onClick={() => { setUserId(null); setOtp(""); setDemoOtp(null); setError(""); }}
+            style={{ display: "block", margin: "16px auto 0", fontSize: 13, color: "var(--ink-faint)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+          >
+            Back to sign in
+          </button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            हाम्रो विद्यार्थी
+    <AuthShell>
+      <div style={cardStyle} className="animate-scale-in">
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: "var(--saffron)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18,
+            }}>🎓</div>
+            <span style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 500, color: "var(--ink)" }}>
+              हाम्रो विद्यार्थी
+            </span>
+          </div>
+          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 400, color: "var(--ink)", marginBottom: 6, lineHeight: 1.2 }}>
+            Welcome back
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Keeping student wellbeing first
-          </p>
+          <p style={{ fontSize: 13.5, color: "var(--ink-faint)" }}>Sign in to the student wellbeing system</p>
         </div>
 
-        <form onSubmit={handlePassword} className="space-y-4">
+        <form onSubmit={handlePassword} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label style={{ display: "block", fontSize: 12.5, fontWeight: 500, color: "var(--ink-muted)", marginBottom: 6, letterSpacing: "0.02em" }}>
+              EMAIL
+            </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
-              placeholder="you@school.edu.np"
+              type="email" value={email}
+              onChange={e => setEmail(e.target.value)}
+              required placeholder="you@school.edu.np"
+              style={inputStyle}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
-              placeholder="Enter your password"
-            />
+            <label style={{ display: "block", fontSize: 12.5, fontWeight: 500, color: "var(--ink-muted)", marginBottom: 6, letterSpacing: "0.02em" }}>
+              PASSWORD
+            </label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required placeholder="Enter your password"
+                style={{ ...inputStyle, paddingRight: 44 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--ink-faint)", display: "flex" }}
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
+          {error && <ErrorBanner msg={error} />}
+          <Btn loading={loading}>Sign in</Btn>
         </form>
 
-        <p className="text-center text-sm text-gray-400 mt-6">
-          Don't have an account?{" "}
-          <button onClick={onSwitch} className="text-gray-700 font-medium hover:underline">
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+          <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>Don't have an account? </span>
+          <button onClick={onSwitch} style={{ fontSize: 13, fontWeight: 500, color: "var(--saffron)", background: "none", border: "none", cursor: "pointer" }}>
             Register
           </button>
-        </p>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
+
+function AuthShell({ children }) {
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "var(--cream)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      position: "relative",
+    }}>
+      {/* Decorative blobs */}
+      <div style={{
+        position: "fixed", top: -120, right: -120,
+        width: 480, height: 480, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(224,123,57,0.12) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "fixed", bottom: -120, left: -120,
+        width: 400, height: 400, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(61,61,143,0.10) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{ position: "relative", zIndex: 1, width: "100%" , display: "flex", justifyContent: "center" }}>
+        {children}
       </div>
     </div>
   );
 }
+
+function Btn({ children, loading, disabled }) {
+  return (
+    <button
+      type="submit"
+      disabled={loading || disabled}
+      style={{
+        width: "100%", padding: "13px 20px",
+        background: (loading || disabled) ? "var(--cream-dark)" : "var(--ink)",
+        color: (loading || disabled) ? "var(--ink-faint)" : "#fff",
+        border: "none", borderRadius: 12,
+        fontSize: 14, fontWeight: 500,
+        cursor: (loading || disabled) ? "not-allowed" : "pointer",
+        transition: "all 0.2s",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        letterSpacing: "-0.01em",
+      }}
+    >
+      {children}
+      {!loading && !disabled && <ArrowRight size={15} strokeWidth={2} />}
+    </button>
+  );
+}
+
+function ErrorBanner({ msg }) {
+  return (
+    <div style={{
+      background: "var(--red-light)", border: "1px solid rgba(153,27,27,0.15)",
+      borderRadius: 10, padding: "10px 14px",
+      fontSize: 13, color: "var(--red)",
+    }}>
+      {msg}
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%", padding: "11px 14px",
+  border: "1.5px solid var(--border-strong)",
+  borderRadius: 10, fontSize: 14,
+  color: "var(--ink)", background: "#fff",
+  transition: "all 0.2s",
+};

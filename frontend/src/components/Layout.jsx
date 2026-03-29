@@ -1,12 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
-  ClipboardCheck,
-  Eye,
-  LayoutDashboard,
-  LogOut,
-  Shield,
-  ArrowLeftRight,
+  ClipboardCheck, Eye, LayoutDashboard, LogOut,
+  Shield, ArrowLeftRight, ChevronRight,
 } from "lucide-react";
 
 const NAV = {
@@ -26,15 +22,14 @@ const NAV = {
   ],
 };
 
-const ROLE_LABEL = { teacher: "Teacher", counselor: "Counselor", admin: "Admin" };
+const ROLE_COLOR = {
+  teacher: "bg-indigo-50 text-indigo-700",
+  counselor: "bg-amber-50 text-amber-700",
+  admin: "bg-red-50 text-red-700",
+};
 
 function getInitials(name) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
 export default function Layout({ role, userName, userEmail, onSignOut, onSwitchAccount }) {
@@ -44,9 +39,7 @@ export default function Layout({ role, userName, userEmail, onSignOut, onSwitchA
 
   useEffect(() => {
     function handleClick(e) {
-      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
-        setPopoverOpen(false);
-      }
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) setPopoverOpen(false);
     }
     if (popoverOpen) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -54,90 +47,187 @@ export default function Layout({ role, userName, userEmail, onSignOut, onSwitchA
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
-        <div className="px-4 pt-5 pb-3">
-          <h1 className="text-base font-semibold text-gray-900 tracking-tight">
-            हाम्रो विद्यार्थी
-          </h1>
+      {/* Sidebar */}
+      <aside style={{
+        width: 220,
+        background: "#1C1917",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+      }}>
+        {/* Logo */}
+        <div style={{ padding: "28px 20px 20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: "var(--saffron)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 16 }}>🎓</span>
+            </div>
+            <span style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: 15,
+              fontWeight: 500,
+              color: "#F7F3EE",
+              letterSpacing: "-0.01em",
+            }}>
+              हाम्रो विद्यार्थी
+            </span>
+          </div>
+          <p style={{ fontSize: 11, color: "rgba(247,243,238,0.35)", marginLeft: 42, marginTop: 2 }}>
+            Wellbeing System
+          </p>
         </div>
 
-        <nav className="flex-1 px-2.5 space-y-0.5">
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "0 16px 12px" }} />
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "4px 10px" }}>
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                }`
-              }
+              style={({ isActive }) => ({
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "9px 12px",
+                borderRadius: 10,
+                marginBottom: 2,
+                fontSize: 13.5,
+                fontWeight: isActive ? 500 : 400,
+                color: isActive ? "#F7F3EE" : "rgba(247,243,238,0.45)",
+                background: isActive ? "rgba(247,243,238,0.10)" : "transparent",
+                textDecoration: "none",
+                transition: "all 0.15s",
+                letterSpacing: "-0.01em",
+              })}
             >
-              <Icon size={16} strokeWidth={1.8} />
+              <Icon size={15} strokeWidth={isActive => isActive ? 2 : 1.8} />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="relative border-t border-gray-100 px-2.5 py-2.5" ref={popoverRef}>
+        {/* User menu */}
+        <div style={{ padding: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }} ref={popoverRef}>
           <button
-            onClick={() => setPopoverOpen((v) => !v)}
-            className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            onClick={() => setPopoverOpen(v => !v)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              width: "100%",
+              padding: "10px 10px",
+              borderRadius: 10,
+              border: "none",
+              background: popoverOpen ? "rgba(255,255,255,0.08)" : "transparent",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={e => !popoverOpen && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+            onMouseLeave={e => !popoverOpen && (e.currentTarget.style.background = "transparent")}
           >
-            <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-              <span className="text-[11px] font-semibold text-white leading-none">
-                {getInitials(userName)}
-              </span>
+            <div style={{
+              width: 34, height: 34, borderRadius: "50%",
+              background: "var(--saffron)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+              fontSize: 12, fontWeight: 600, color: "#fff",
+            }}>
+              {getInitials(userName)}
             </div>
-            <div className="min-w-0 text-left">
-              <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
-              <p className="text-[11px] text-gray-400 leading-tight">{ROLE_LABEL[role]}</p>
+            <div style={{ textAlign: "left", minWidth: 0, flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#F7F3EE", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {userName}
+              </p>
+              <p style={{ fontSize: 11, color: "rgba(247,243,238,0.35)", textTransform: "capitalize" }}>
+                {role}
+              </p>
             </div>
+            <ChevronRight size={14} style={{ color: "rgba(247,243,238,0.25)", transform: popoverOpen ? "rotate(90deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
           </button>
 
           {popoverOpen && (
-            <div className="absolute bottom-full left-2.5 right-2.5 mb-2 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-50">
-              <div className="px-4 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-white">{getInitials(userName)}</span>
+            <div className="animate-scale-in" style={{
+              position: "absolute",
+              bottom: 80,
+              left: 10,
+              right: 10,
+              background: "#fff",
+              borderRadius: 14,
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-lg)",
+              overflow: "hidden",
+              zIndex: 50,
+            }}>
+              <div style={{ padding: "16px", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: "50%",
+                    background: "var(--saffron)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 600, color: "#fff", flexShrink: 0,
+                  }}>
+                    {getInitials(userName)}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
-                    <p className="text-xs text-gray-400 truncate">{userEmail}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600 capitalize">
-                      {ROLE_LABEL[role]}
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)" }}>{userName}</p>
+                    <p style={{ fontSize: 11.5, color: "var(--ink-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</p>
+                    <span style={{
+                      display: "inline-block", marginTop: 4, padding: "2px 8px",
+                      borderRadius: 20, fontSize: 10, fontWeight: 600,
+                      background: role === "admin" ? "#FEF2F2" : role === "counselor" ? "#FFFBEB" : "#EEEEF8",
+                      color: role === "admin" ? "#991B1B" : role === "counselor" ? "#92400E" : "#3D3D8F",
+                      textTransform: "capitalize",
+                    }}>
+                      {role}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="p-1.5">
-                <button
-                  onClick={() => { setPopoverOpen(false); onSwitchAccount(); }}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <ArrowLeftRight size={15} strokeWidth={1.8} className="text-gray-400" />
-                  Switch account
-                </button>
-                <button
-                  onClick={() => { setPopoverOpen(false); onSignOut(); }}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut size={15} strokeWidth={1.8} />
-                  Sign out
-                </button>
+              <div style={{ padding: 6 }}>
+                <MenuBtn icon={ArrowLeftRight} label="Switch account" onClick={() => { setPopoverOpen(false); onSwitchAccount(); }} />
+                <MenuBtn icon={LogOut} label="Sign out" onClick={() => { setPopoverOpen(false); onSignOut(); }} danger />
               </div>
             </div>
           )}
         </div>
       </aside>
 
-      <main className="flex-1 bg-gray-50 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-6 py-6">
+      {/* Main content */}
+      <main style={{ flex: 1, background: "var(--cream)", overflowY: "auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 32px" }}>
           <Outlet />
         </div>
       </main>
     </div>
+  );
+}
+
+function MenuBtn({ icon: Icon, label, onClick, danger }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: 10, width: "100%",
+        padding: "9px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+        fontSize: 13, fontWeight: 400,
+        color: danger ? "#991B1B" : "var(--ink)",
+        background: hover ? (danger ? "#FEF2F2" : "var(--cream)") : "transparent",
+        transition: "background 0.15s",
+      }}
+    >
+      <Icon size={14} strokeWidth={1.8} />
+      {label}
+    </button>
   );
 }
