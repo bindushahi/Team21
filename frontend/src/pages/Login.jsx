@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { loginUser, verifyOtp } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import ConfessionBoard from "./ConfessionBoard";
 
 export default function Login({ onSwitch }) {
   const { login } = useAuth();
@@ -12,6 +13,7 @@ export default function Login({ onSwitch }) {
   const [demoOtp, setDemoOtp] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
 
   async function handlePassword(e) {
     e.preventDefault();
@@ -43,7 +45,6 @@ export default function Login({ onSwitch }) {
     }
   }
 
-  // ---------- OTP SCREEN ----------
   if (userId) {
     return (
       <div
@@ -52,50 +53,34 @@ export default function Login({ onSwitch }) {
       >
         <div className="w-full max-w-sm bg-white/30 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-black tracking-tight">
-              Enter OTP
-            </h1>
+            <h1 className="text-2xl font-semibold text-black tracking-tight">Enter OTP</h1>
             <p className="text-sm text-black/80 mt-1">
-              {sentVia === "sms"
-                ? "A 6-digit code has been sent to your phone"
-                : "A 6-digit code has been generated for you"}
+              {sentVia === "sms" ? "A 6-digit code has been sent to your phone" : "A 6-digit code has been generated for you"}
             </p>
           </div>
-
           {sentVia === "sms" && (
             <div className="bg-emerald-50/30 border border-emerald-200/40 rounded-lg px-3 py-2 mb-4">
-              <p className="text-xs text-emerald-700">
-                Check your phone for the SMS verification code
-              </p>
+              <p className="text-xs text-emerald-700">Check your phone for the SMS verification code</p>
             </div>
           )}
-
           {demoOtp && (
             <div className="bg-amber-50/30 border border-amber-200/40 rounded-lg px-3 py-2 mb-4">
               <p className="text-xs text-amber-700">
-                Demo mode — your OTP is:{" "}
-                <span className="font-mono font-bold">{demoOtp}</span>
+                Demo mode — your OTP is: <span className="font-mono font-bold">{demoOtp}</span>
               </p>
             </div>
           )}
-
           <form onSubmit={handleOtp} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
-                autoFocus
-                className="w-full px-3 py-3 border border-white/40 rounded-lg text-center text-lg font-mono tracking-widest focus:outline-none focus:border-black bg-black/10 text-black placeholder-black/70"
-                placeholder="000000"
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-400 bg-red-600/20 px-3 py-2 rounded-lg">{error}</p>
-            )}
-
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+              autoFocus
+              className="w-full px-3 py-3 border border-white/40 rounded-lg text-center text-lg font-mono tracking-widest focus:outline-none focus:border-black bg-black/10 text-black placeholder-black/70"
+              placeholder="000000"
+            />
+            {error && <p className="text-sm text-red-400 bg-red-600/20 px-3 py-2 rounded-lg">{error}</p>}
             <button
               type="submit"
               disabled={loading || otp.length < 6}
@@ -104,84 +89,74 @@ export default function Login({ onSwitch }) {
               {loading ? "Verifying..." : "Verify"}
             </button>
           </form>
-
           <p className="text-center text-sm text-white/70 mt-6">
             <button
-              onClick={() => {
-                setUserId(null);
-                setOtp("");
-                setDemoOtp(null);
-                setSentVia(null);
-                setError("");
-              }}
+              onClick={() => { setUserId(null); setOtp(""); setDemoOtp(null); setSentVia(null); setError(""); }}
               className="text-black font-medium hover:underline"
-            >
-              Back to sign in
-            </button>
+            >Back to sign in</button>
           </p>
         </div>
       </div>
     );
   }
 
-  // ---------- LOGIN SCREEN ----------
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-6 bg-cover bg-center"
-      style={{ backgroundImage: "url('/LandingBg.png')" }}
-    >
-      <div className="w-full max-w-sm bg-white/30 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-black tracking-tight">
-            हाम्रो विद्यार्थी
-          </h1>
-          <p className="text-sm text-black/80 mt-1">Keeping student wellbeing first</p>
-        </div>
-
-        <form onSubmit={handlePassword} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-black/90 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
-              placeholder="you@school.edu.np"
-            />
+    <>
+      {showPortal && <ConfessionBoard onClose={() => setShowPortal(false)} />}
+      <div
+        className="min-h-screen flex items-center justify-center p-6 bg-cover bg-center"
+        style={{ backgroundImage: "url('/LandingBg.png')" }}
+      >
+        <div className="w-full max-w-sm bg-white/30 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-black tracking-tight">हाम्रो विद्यार्थी</h1>
+            <p className="text-sm text-black/80 mt-1">Keeping student wellbeing first</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-black/90 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-400 bg-red-600/20 px-3 py-2 rounded-lg">{error}</p>
-          )}
+          <form onSubmit={handlePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-black/90 mb-1">Email</label>
+              <input
+                type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
+                placeholder="you@school.edu.np"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black/90 mb-1">Password</label>
+              <input
+                type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+                className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
+                placeholder="Enter your password"
+              />
+            </div>
+            {error && <p className="text-sm text-red-400 bg-red-600/20 px-3 py-2 rounded-lg">{error}</p>}
+            <button
+              type="submit" disabled={loading}
+              className="w-full py-2.5 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-black disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-black disabled:opacity-50 transition-colors"
+            onClick={() => setShowPortal(true)}
+            className="w-full mt-3 py-2.5 text-sm font-medium rounded-lg transition-all"
+            style={{
+              background: "linear-gradient(90deg, #0f172a, #1e293b)",
+              color: "#94a3b8",
+              border: "1px solid rgba(255,255,255,0.1)",
+              letterSpacing: "0.02em",
+            }}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            🕯️ Whisper Board — speak freely
           </button>
-        </form>
 
-        <p className="text-center text-sm text-black/70 mt-6">
-          Don't have an account?{" "}
-          <button onClick={onSwitch} className="text-blue-600 font-medium hover:underline">
-            Register
-          </button>
-        </p>
+          <p className="text-center text-sm text-black/70 mt-5">
+            Don't have an account?{" "}
+            <button onClick={onSwitch} className="text-blue-600 font-medium hover:underline">Register</button>
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
