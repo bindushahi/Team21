@@ -53,7 +53,7 @@ function CommentSection({ comments, onAdd }) {
   function submit(e) {
     e.preventDefault();
     if (!text.trim()) return;
-    onAdd({ author: randomAnon(), body: text.trim() });
+    onAdd({ author: randomAnon(), text: text.trim() });
     setText("");
   }
   return (

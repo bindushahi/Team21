@@ -13,6 +13,7 @@ from database import (
     engine, Base, SessionLocal,
     School, User, Class, ClassTeacher, Student, CheckIn,
     Observation, Intervention, Buddy, ClassSchedule,
+    ConfessionPost, Comment,
 )
 import os
 from auth import hash_password
@@ -33,8 +34,17 @@ def load_json(name: str) -> list:
         return json.load(f)
 
 
+CONFESSION_TABLES = {"confession_posts", "comments", "post_likes"}
+
+
 def seed():
-    Base.metadata.drop_all(bind=engine)
+    # Only drop non-confession tables so whisper board data persists
+    tables_to_drop = [
+        t for t in reversed(Base.metadata.sorted_tables)
+        if t.name not in CONFESSION_TABLES
+    ]
+    Base.metadata.drop_all(bind=engine, tables=tables_to_drop)
+    # create_all is safe – it only creates tables that don't exist yet
     Base.metadata.create_all(bind=engine)
 
     school = School(id="school-1", name="Hamro Vidyalaya", address="Kathmandu, Nepal")
@@ -176,6 +186,42 @@ def seed():
         ))
 
     db.commit()
+
+    # ── Seed confessions from JSON (only if table is empty) ──────────────────
+    existing = db.query(ConfessionPost).count()
+    if existing == 0:
+        from datetime import timedelta
+        now = datetime.now(timezone.utc)
+        confessions_raw = load_json("confessions.json")
+
+        for conf in confessions_raw:
+            post_id = f"conf-seed-{uuid4().hex[:8]}"
+            post_time = now - timedelta(hours=conf["hours_ago"])
+            post = ConfessionPost(
+                id=post_id,
+                author=conf["author"],
+                title=conf["title"],
+                body=conf["body"],
+                tag=conf["tag"],
+                likes=conf.get("likes", 0),
+                created_at=post_time,
+            )
+            db.add(post)
+            for c in conf.get("comments", []):
+                comment = Comment(
+                    id=f"cmt-seed-{uuid4().hex[:8]}",
+                    post_id=post_id,
+                    author=c["author"],
+                    text=c["text"],
+                    created_at=post_time + timedelta(hours=c.get("hours_after", 0)),
+                )
+                db.add(comment)
+
+        db.commit()
+        print(f"  {len(confessions_raw)} dummy confessions seeded from confessions.json")
+    else:
+        print(f"  Confessions table already has {existing} posts - skipped seeding")
+
     db.close()
 
     print("Seeded successfully.")

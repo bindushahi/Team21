@@ -1,0 +1,87 @@
+[
+  {
+    "author": "Silent Sparrow",
+    "title": "I feel like nobody notices me in class",
+    "body": "Every day I sit in the back row and nobody talks to me. I raise my hand but the teacher never picks me. I know I'm quiet but it still hurts. Sometimes I wonder if I just stopped coming, would anyone even notice?",
+    "tag": "feelings",
+    "likes": 14,
+    "hours_ago": 2,
+    "comments": [
+      { "author": "Wandering Cloud", "text": "I felt the same way last year. It gets better, I promise. Try talking to the person next to you — you might be surprised.", "hours_after": 1 },
+      { "author": "Gentle Ghost", "text": "You matter more than you think. Sending you strength 💙", "hours_after": 0.5 }
+    ]
+  },
+  {
+    "author": "Midnight Ink",
+    "title": "My parents are getting divorced",
+    "body": "They told us last week. My younger sister cried all night and I had to pretend I was okay so she wouldn't feel worse. I haven't told any of my friends because I don't want them to feel sorry for me. I just needed somewhere to say it.",
+    "tag": "family",
+    "likes": 23,
+    "hours_ago": 5,
+    "comments": [
+      { "author": "Broken Compass", "text": "You're incredibly strong for being there for your sister. But remember it's okay to not be okay yourself.", "hours_after": 3 },
+      { "author": "Fading Echo", "text": "Been through the same thing two years ago. You can DM me if you ever want to talk. It's not the end, I promise.", "hours_after": 2 },
+      { "author": "Pale Comet", "text": "Sending a huge hug. You're not alone in this.", "hours_after": 1 }
+    ]
+  },
+  {
+    "author": "Quiet Storm",
+    "title": "I cheated on the math exam and I feel terrible",
+    "body": "The pressure from my parents to get good marks is insane. I copied from the person next to me during the unit test. I got 92 and everyone congratulated me but I feel like a fraud. I want to confess to the teacher but I'm terrified of the consequences.",
+    "tag": "school",
+    "likes": 8,
+    "hours_ago": 8,
+    "comments": [
+      { "author": "Hidden Flame", "text": "The fact that you feel guilty means you have a good heart. Maybe study extra hard for the next one and let that be your redemption.", "hours_after": 5 }
+    ]
+  },
+  {
+    "author": "Forgotten Song",
+    "title": "I have a crush on my best friend and it's eating me alive",
+    "body": "We've been best friends since class 6. Lately every time they laugh or look at me I feel like my heart is going to explode. I can't tell them because what if it ruins everything? But keeping it inside is so painful.",
+    "tag": "love",
+    "likes": 31,
+    "hours_ago": 12,
+    "comments": [
+      { "author": "Nameless Star", "text": "This is literally me right now. The struggle is SO real 😭", "hours_after": 8 },
+      { "author": "Lone Petal", "text": "Life is short. Tell them. Even if it's scary, you deserve to be honest with your feelings.", "hours_after": 6 }
+    ]
+  },
+  {
+    "author": "Paper Crane",
+    "title": "My friend group is falling apart and idk what to do",
+    "body": "Two of my closest friends had a massive fight last week and now everyone has to pick sides. I don't want to pick sides. I love both of them. But staying neutral is making everyone mad at me instead. It feels like I'm losing everyone.",
+    "tag": "friends",
+    "likes": 17,
+    "hours_ago": 18,
+    "comments": [
+      { "author": "Dim Lantern", "text": "Stay neutral. Real friends will respect that. The ones who force you to pick sides aren't worth it.", "hours_after": 10 },
+      { "author": "Soft Thunder", "text": "Going through the exact same thing. It's exhausting. Hang in there.", "hours_after": 7 }
+    ]
+  },
+  {
+    "author": "Hollow Moon",
+    "title": "I'm scared I might have anxiety",
+    "body": "My heart races before every class presentation. I can't sleep at night because my brain won't stop worrying about everything. My hands shake when I have to talk to new people. I googled the symptoms and everything matches but I don't know who to talk to about it.",
+    "tag": "stress",
+    "likes": 26,
+    "hours_ago": 24,
+    "comments": [
+      { "author": "Silent Sparrow", "text": "Please talk to a counselor. Our school has one and they're actually really chill. It helped me a lot.", "hours_after": 18 },
+      { "author": "Gentle Ghost", "text": "You're not alone. More people feel this way than you think. Acknowledging it is the first step 💪", "hours_after": 12 },
+      { "author": "Midnight Ink", "text": "Breathing exercises before sleep genuinely help. 4-7-8 method. Look it up.", "hours_after": 6 }
+    ]
+  },
+  {
+    "author": "Hidden Flame",
+    "title": "I secretly write poetry and I'm too embarrassed to show anyone",
+    "body": "I've been writing poems since class 7. I have three full notebooks. Some of them are about my life, some about made-up worlds. My friends would probably laugh if they knew. But writing is the only thing that makes me feel truly alive.",
+    "tag": "secret",
+    "likes": 19,
+    "hours_ago": 36,
+    "comments": [
+      { "author": "Forgotten Song", "text": "Please share some! Even anonymously here. Poetry is a gift, not something to be embarrassed about.", "hours_after": 24 },
+      { "author": "Quiet Storm", "text": "I do the same with drawing. Creative people understand each other. Keep writing!", "hours_after": 20 }
+    ]
+  }
+]
