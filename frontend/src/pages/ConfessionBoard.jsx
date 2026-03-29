@@ -1,4 +1,13 @@
 import { useState, useEffect } from "react";
+import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Heart, MessageSquare, Search, Sparkles, Moon, Sun, X } from "lucide-react";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const ANON_NAMES = [
@@ -9,9 +18,16 @@ const ANON_NAMES = [
 ];
 const TAGS = ["school","friends","family","feelings","secret","advice","rant","love","stress","other"];
 const TAG_COLORS = {
-  school:"#16a34a",friends:"#2563eb",family:"#db2777",feelings:"#9333ea",
-  secret:"#ea580c",advice:"#059669",rant:"#dc2626",love:"#ec4899",
-  stress:"#ca8a04",other:"#64748b",
+  school:"bg-green-500/10 text-green-500 border-green-500/20",
+  friends:"bg-blue-500/10 text-blue-500 border-blue-500/20",
+  family:"bg-pink-500/10 text-pink-500 border-pink-500/20",
+  feelings:"bg-purple-500/10 text-purple-500 border-purple-500/20",
+  secret:"bg-orange-500/10 text-orange-500 border-orange-500/20",
+  advice:"bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  rant:"bg-red-500/10 text-red-500 border-red-500/20",
+  love:"bg-rose-500/10 text-rose-500 border-rose-500/20",
+  stress:"bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  other:"bg-slate-500/10 text-slate-500 border-slate-500/20",
 };
 
 function randomAnon() { return ANON_NAMES[Math.floor(Math.random() * ANON_NAMES.length)]; }
@@ -22,294 +38,140 @@ function timeAgo(ts) {
   if (s < 86400) return `${Math.floor(s/3600)}h ago`;
   return `${Math.floor(s/86400)}d ago`;
 }
-function genId() { return Math.random().toString(36).slice(2,10); }
 
-// responsive hook
-function useWindowWidth() {
-  const [w, setW] = useState(window.innerWidth);
-  useEffect(() => {
-    const fn = () => setW(window.innerWidth);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, []);
-  return w;
-}
+// ── Components ────────────────────────────────────────────────────────────────
 
-// SEED_POSTS removed - fetching from backend
-
-// ── theme ─────────────────────────────────────────────────────────────────────
-function getTheme(dark) {
-  return dark ? {
-    pageBg:           "linear-gradient(135deg,#020617 0%,#0c1322 50%,#120a1e 100%)",
-    sidebarBg:        "rgba(10,17,33,0.7)",
-    sidebarBorder:    "rgba(255,255,255,0.06)",
-    cardBg:           "rgba(15,23,42,0.8)",
-    cardBorder:       "rgba(255,255,255,0.07)",
-    cardHover:        "rgba(255,255,255,0.13)",
-    inputBg:          "rgba(255,255,255,0.05)",
-    inputBorder:      "rgba(255,255,255,0.1)",
-    modalBg:          "linear-gradient(160deg,#0f172a,#1a2540)",
-    modalBorder:      "rgba(255,255,255,0.1)",
-    heading:          "#f1f5f9",
-    body:             "#94a3b8",
-    sub:              "#475569",
-    muted:            "#1e293b",
-    tagActiveBg:      (c) => c+"25",
-    tagActiveColor:   (c) => c,
-    tagInactiveBg:    "rgba(255,255,255,0.04)",
-    tagInactiveColor: "#475569",
-    tagInactiveBorder:"rgba(255,255,255,0.08)",
-    btnBg:            "linear-gradient(135deg,#1e293b,#2d3f5a)",
-    btnBorder:        "rgba(255,255,255,0.12)",
-    btnColor:         "#f1f5f9",
-    accentBtnBg:      "linear-gradient(135deg,#4f46e5,#7c3aed)",
-    accentBtnColor:   "#fff",
-    closeBg:          "rgba(255,255,255,0.05)",
-    closeBorder:      "rgba(255,255,255,0.08)",
-    closeColor:       "#64748b",
-    sortActiveBg:     "rgba(255,255,255,0.1)",
-    sortColor:        "#f1f5f9",
-    scrollThumb:      "rgba(255,255,255,0.1)",
-    commentBorder:    "rgba(255,255,255,0.07)",
-    likedBg:          "rgba(248,113,113,0.15)",
-    likedBorder:      "rgba(248,113,113,0.35)",
-    blob1: "rgba(99,102,241,0.15)", blob2: "rgba(236,72,153,0.1)", blob3: "rgba(6,182,212,0.07)",
-  } : {
-    pageBg:           "linear-gradient(135deg,#f0f9ff 0%,#fafafa 50%,#fdf4ff 100%)",
-    sidebarBg:        "rgba(255,255,255,0.7)",
-    sidebarBorder:    "rgba(0,0,0,0.06)",
-    cardBg:           "rgba(255,255,255,0.9)",
-    cardBorder:       "rgba(0,0,0,0.07)",
-    cardHover:        "rgba(0,0,0,0.12)",
-    inputBg:          "rgba(0,0,0,0.03)",
-    inputBorder:      "rgba(0,0,0,0.1)",
-    modalBg:          "linear-gradient(160deg,#ffffff,#f8fafc)",
-    modalBorder:      "rgba(0,0,0,0.09)",
-    heading:          "#0f172a",
-    body:             "#475569",
-    sub:              "#94a3b8",
-    muted:            "#e2e8f0",
-    tagActiveBg:      (c) => c+"18",
-    tagActiveColor:   (c) => c,
-    tagInactiveBg:    "rgba(0,0,0,0.04)",
-    tagInactiveColor: "#94a3b8",
-    tagInactiveBorder:"rgba(0,0,0,0.07)",
-    btnBg:            "linear-gradient(135deg,#1e293b,#334155)",
-    btnBorder:        "rgba(0,0,0,0.1)",
-    btnColor:         "#f8fafc",
-    accentBtnBg:      "linear-gradient(135deg,#4f46e5,#7c3aed)",
-    accentBtnColor:   "#fff",
-    closeBg:          "rgba(0,0,0,0.05)",
-    closeBorder:      "rgba(0,0,0,0.07)",
-    closeColor:       "#94a3b8",
-    sortActiveBg:     "rgba(0,0,0,0.08)",
-    sortColor:        "#0f172a",
-    scrollThumb:      "rgba(0,0,0,0.1)",
-    commentBorder:    "rgba(0,0,0,0.07)",
-    likedBg:          "rgba(220,38,38,0.08)",
-    likedBorder:      "rgba(220,38,38,0.25)",
-    blob1: "rgba(99,102,241,0.07)", blob2: "rgba(236,72,153,0.05)", blob3: "rgba(6,182,212,0.04)",
-  };
-}
-
-// ── TagPill ───────────────────────────────────────────────────────────────────
-function TagPill({ tag, small }) {
+function TagPill({ tag }) {
+  const cn = TAG_COLORS[tag] || TAG_COLORS.other;
   return (
-    <span style={{
-      background: TAG_COLORS[tag]+"18", color: TAG_COLORS[tag],
-      border: `1px solid ${TAG_COLORS[tag]}40`, borderRadius: 99,
-      padding: small ? "1px 8px" : "3px 11px",
-      fontSize: small ? 10 : 11, fontWeight: 600,
-      letterSpacing: "0.04em", textTransform: "uppercase",
-    }}>{tag}</span>
+    <Badge variant="outline" className={`lowercase font-semibold rounded-full px-3 py-0.5 ${cn} uppercase tracking-wider text-[10px]`}>
+      {tag}
+    </Badge>
   );
 }
 
-// ── CommentSection ────────────────────────────────────────────────────────────
-function CommentSection({ comments, onAdd, t }) {
+function CommentSection({ comments, onAdd }) {
   const [text, setText] = useState("");
   function submit(e) {
     e.preventDefault();
     if (!text.trim()) return;
-    onAdd({ id: genId(), author: randomAnon(), body: text.trim(), ts: Date.now() });
+    onAdd({ author: randomAnon(), body: text.trim() });
     setText("");
   }
   return (
-    <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.commentBorder}` }}>
-      {comments.map(c => (
-        <div key={c.id} style={{ borderLeft: `2px solid ${t.commentBorder}`, paddingLeft: 12, marginBottom: 10 }}>
-          <span style={{ fontSize: 11, color: t.sub, fontFamily: "'DM Mono',monospace" }}>{c.author} · {timeAgo(c.ts)}</span>
-          <p style={{ fontSize: 13, color: t.body, margin: "3px 0 0", lineHeight: 1.55 }}>{c.body}</p>
+    <div className="mt-4 pt-4 border-t border-border/50">
+      <ScrollArea className="max-h-52 pr-4">
+        <div className="flex flex-col gap-3">
+          {comments.map((c, i) => (
+            <div key={i} className="flex gap-3 text-sm border-l-2 border-primary/20 pl-3">
+              <Avatar className="w-6 h-6 border bg-muted">
+                <AvatarFallback className="text-[10px]">{c.author[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">{c.author}</span>
+                  <span className="text-[10px] text-muted-foreground/60">{timeAgo(c.ts)}</span>
+                </div>
+                <p className="text-secondary-foreground mt-1 leading-relaxed">{c.body}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-      <form onSubmit={submit} style={{ display: "flex", gap: 8, marginTop: 10 }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Reply anonymously…"
-          style={{ flex: 1, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, padding: "7px 12px", color: t.heading, fontSize: 12, outline: "none", fontFamily: "inherit" }} />
-        <button type="submit" style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, padding: "7px 14px", color: t.sub, fontSize: 13, cursor: "pointer" }}>↩</button>
+      </ScrollArea>
+      <form onSubmit={submit} className="flex gap-2 mt-4">
+        <Input 
+          className="bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary/50 text-xs" 
+          value={text} 
+          onChange={e => setText(e.target.value)} 
+          placeholder="Reply anonymously..." 
+        />
+        <Button size="sm" variant="secondary" type="submit" className="text-xs">Reply</Button>
       </form>
     </div>
   );
 }
 
-// ── PostCard ──────────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onComment, t }) {
+function PostCard({ post, onLike, onComment }) {
   const [open, setOpen] = useState(false);
   const liked = post.liked || false;
 
   return (
-    <div
-      style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 18, padding: "20px 24px", backdropFilter: "blur(20px)", transition: "border-color 0.2s,box-shadow 0.2s", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = t.cardHover; e.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.1)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = t.cardBorder; e.currentTarget.style.boxShadow = "0 2px 16px rgba(0,0,0,0.06)"; }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg,${TAG_COLORS[post.tag]}55,${TAG_COLORS[post.tag]}18)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: TAG_COLORS[post.tag], fontWeight: 700, border: `1px solid ${TAG_COLORS[post.tag]}40`, flexShrink: 0 }}>
-            {post.author[0]}
+    <Card className="rounded-2xl border-border/40 bg-card/60 backdrop-blur-xl shadow-none hover:shadow-xl hover:border-border/80 transition-all duration-300 overflow-hidden flex flex-col group">
+      <CardHeader className="pb-3 pt-5">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10 border bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-background">
+              <AvatarFallback className="font-bold text-primary">{post.author[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-mono text-sm tracking-tight text-muted-foreground">{post.author}</span>
+              <span className="text-xs text-muted-foreground/60 font-medium">{timeAgo(post.ts)}</span>
+            </div>
           </div>
-          <div>
-            <span style={{ fontSize: 12, color: t.sub, fontFamily: "'DM Mono',monospace" }}>{post.author}</span>
-            <span style={{ fontSize: 11, color: t.muted, margin: "0 6px" }}>·</span>
-            <span style={{ fontSize: 11, color: t.muted, fontFamily: "'DM Mono',monospace" }}>{timeAgo(post.ts)}</span>
-          </div>
+          <TagPill tag={post.tag} />
         </div>
-        <TagPill tag={post.tag} small />
-      </div>
-
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: t.heading, margin: "0 0 8px", lineHeight: 1.4, fontFamily: "'Lora',serif" }}>{post.title}</h3>
-      <p style={{ fontSize: 14, color: t.body, lineHeight: 1.65, margin: 0, display: "-webkit-box", WebkitLineClamp: open ? "unset" : 3, WebkitBoxOrient: "vertical", overflow: open ? "visible" : "hidden" }}>{post.body}</p>
-      {post.body.length > 100 && (
-        <button onClick={() => setOpen(o => !o)} style={{ background: "none", border: "none", color: t.sub, fontSize: 11, cursor: "pointer", padding: "4px 0 0", fontFamily: "'DM Mono',monospace" }}>{open ? "show less ↑" : "read more ↓"}</button>
-      )}
-
-      <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
-        <button onClick={() => onLike(post.id)} style={{ background: liked ? t.likedBg : t.inputBg, border: `1px solid ${liked ? t.likedBorder : t.inputBorder}`, borderRadius: 99, padding: "5px 14px", color: liked ? "#dc2626" : t.sub, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", fontFamily: "'DM Mono',monospace" }}>
-          {liked ? "♥" : "♡"} {post.likes}
-        </button>
-        <button onClick={() => setOpen(o => !o)} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 99, padding: "5px 14px", color: t.sub, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "'DM Mono',monospace" }}>
-          💬 {post.comments.length}
-        </button>
-      </div>
-
-      {open && <CommentSection comments={post.comments} onAdd={(c) => onComment(post.id, c)} t={t} />}
-    </div>
-  );
-}
-
-// ── NewPostModal ──────────────────────────────────────────────────────────────
-function NewPostModal({ onClose, onSubmit, t }) {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [tag, setTag] = useState("feelings");
-
-  function submit(e) {
-    e.preventDefault();
-    if (!title.trim() || !body.trim()) return;
-    onSubmit({ title: title.trim(), body: body.trim(), tag });
-    onClose();
-  }
-
-  return (
-    <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ width: "100%", maxWidth: 520, background: t.modalBg, border: `1px solid ${t.modalBorder}`, borderRadius: 22, padding: "32px 32px 28px", boxShadow: "0 32px 80px rgba(0,0,0,0.25)", position: "relative" }}>
-        <button onClick={onClose} style={{ position: "absolute", top: 18, right: 18, background: t.closeBg, border: `1px solid ${t.closeBorder}`, borderRadius: 8, width: 30, height: 30, color: t.closeColor, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-
-        <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: t.heading, fontFamily: "'Lora',serif" }}>Confess Anonymously</h2>
-        <p style={{ fontSize: 12, color: t.sub, margin: "0 0 22px", fontFamily: "'DM Mono',monospace" }}>No name. No judgment. Just honesty.</p>
-
-        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {TAGS.map(tg => (
-              <button key={tg} type="button" onClick={() => setTag(tg)} style={{ background: tag === tg ? t.tagActiveBg(TAG_COLORS[tg]) : t.tagInactiveBg, border: `1px solid ${tag === tg ? TAG_COLORS[tg]+"55" : t.tagInactiveBorder}`, borderRadius: 99, padding: "5px 13px", color: tag === tg ? t.tagActiveColor(TAG_COLORS[tg]) : t.tagInactiveColor, fontSize: 11, cursor: "pointer", fontWeight: tag === tg ? 700 : 400, transition: "all 0.15s", textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "'DM Mono',monospace" }}>{tg}</button>
-            ))}
-          </div>
-          <input value={title} onChange={e => setTitle(e.target.value)} required placeholder="Give it a title…" maxLength={120}
-            style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 11, padding: "11px 15px", color: t.heading, fontSize: 15, outline: "none", fontFamily: "'Lora',serif", fontWeight: 600 }} />
-          <textarea value={body} onChange={e => setBody(e.target.value)} required rows={6} placeholder="What's on your mind? No one will know it's you…"
-            style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 11, padding: "11px 15px", color: t.body, fontSize: 14, outline: "none", resize: "vertical", lineHeight: 1.65, fontFamily: "inherit" }} />
-          <button type="submit" disabled={!title.trim() || !body.trim()} style={{ background: t.accentBtnBg, border: "none", borderRadius: 11, padding: 13, color: t.accentBtnColor, fontSize: 15, fontWeight: 700, cursor: "pointer", opacity: (!title.trim() || !body.trim()) ? 0.4 : 1, fontFamily: "'Lora',serif", transition: "opacity 0.2s,box-shadow 0.2s", boxShadow: "0 4px 20px rgba(79,70,229,0.35)" }}>
-            Post Confession →
+        <CardTitle className="text-xl font-bold font-serif leading-snug mt-4 text-foreground group-hover:text-primary transition-colors">
+          {post.title}
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="flex-1 pb-4">
+        <p className={`text-muted-foreground text-sm leading-relaxed ${!open && "line-clamp-3"}`}>
+          {post.body}
+        </p>
+        {post.body.length > 120 && (
+          <button onClick={() => setOpen(o => !o)} className="text-primary hover:text-primary/80 text-xs font-semibold mt-2 focus:outline-none flex items-center gap-1 transition-colors">
+            {open ? "Read less" : "Read more"}
           </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ posts, activeTag, setActiveTag, dark, setDark, onClose, setShowNew, t }) {
-  const totalPosts = posts.length;
-  const topTags = [...TAGS].sort((a, b) => posts.filter(p => p.tag === b).length - posts.filter(p => p.tag === a).length).slice(0, 6);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Branding */}
-      <div style={{ background: t.sidebarBg, border: `1px solid ${t.sidebarBorder}`, borderRadius: 18, padding: "22px 20px", backdropFilter: "blur(20px)" }}>
-        <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: t.heading, fontFamily: "'Lora',serif", letterSpacing: "-0.02em" }}>🕯️ Whisper Board</h1>
-        <p style={{ margin: "0 0 16px", fontSize: 11, color: t.sub, fontFamily: "'DM Mono',monospace" }}>anonymous · no login · no trace</p>
-        <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ flex: 1, textAlign: "center", background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 10, padding: "10px 8px" }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: t.heading, fontFamily: "'Lora',serif" }}>{totalPosts}</div>
-            <div style={{ fontSize: 10, color: t.sub, textTransform: "uppercase", letterSpacing: "0.06em" }}>confessions</div>
-          </div>
-          <div style={{ flex: 1, textAlign: "center", background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 10, padding: "10px 8px" }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: t.heading, fontFamily: "'Lora',serif" }}>{posts.reduce((a, p) => a + p.likes, 0)}</div>
-            <div style={{ fontSize: 10, color: t.sub, textTransform: "uppercase", letterSpacing: "0.06em" }}>hearts</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Post button */}
-      <button onClick={() => setShowNew(true)} style={{ background: t.accentBtnBg, border: "none", borderRadius: 14, padding: "13px 20px", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Lora',serif", boxShadow: "0 4px 20px rgba(79,70,229,0.3)", letterSpacing: "0.01em" }}>
-        ✦ Post a Confession
-      </button>
-
-      {/* Categories */}
-      <div style={{ background: t.sidebarBg, border: `1px solid ${t.sidebarBorder}`, borderRadius: 18, padding: "18px 20px", backdropFilter: "blur(20px)" }}>
-        <p style={{ margin: "0 0 12px", fontSize: 10, color: t.sub, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Categories</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <button onClick={() => setActiveTag("all")} style={{ background: activeTag === "all" ? t.sortActiveBg : "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: activeTag === "all" ? t.sortColor : t.sub, fontSize: 13, cursor: "pointer", textAlign: "left", fontWeight: activeTag === "all" ? 700 : 400, display: "flex", justifyContent: "space-between", transition: "all 0.15s" }}>
-            <span>All posts</span>
-            <span style={{ fontSize: 11, opacity: 0.6 }}>{totalPosts}</span>
-          </button>
-          {TAGS.map(tg => {
-            const count = posts.filter(p => p.tag === tg).length;
-            if (count === 0) return null;
-            return (
-              <button key={tg} onClick={() => setActiveTag(tg === activeTag ? "all" : tg)} style={{ background: activeTag === tg ? t.tagActiveBg(TAG_COLORS[tg]) : "transparent", border: "none", borderRadius: 8, padding: "8px 10px", color: activeTag === tg ? t.tagActiveColor(TAG_COLORS[tg]) : t.sub, fontSize: 13, cursor: "pointer", textAlign: "left", fontWeight: activeTag === tg ? 700 : 400, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.15s" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: TAG_COLORS[tg], display: "inline-block" }} />
-                  {tg}
-                </span>
-                <span style={{ fontSize: 11, opacity: 0.6 }}>{count}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Theme + close */}
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => setDark(d => !d)} style={{ flex: 1, background: t.closeBg, border: `1px solid ${t.closeBorder}`, borderRadius: 11, padding: "9px 14px", color: t.heading, fontSize: 12, cursor: "pointer", fontFamily: "'DM Mono',monospace", fontWeight: 500, transition: "all 0.2s" }}>
-          {dark ? "☀️ Light" : "🌙 Dark"}
-        </button>
-        {onClose && (
-          <button onClick={onClose} style={{ background: t.closeBg, border: `1px solid ${t.closeBorder}`, borderRadius: 11, padding: "9px 16px", color: t.closeColor, fontSize: 12, cursor: "pointer" }}>✕ Close</button>
         )}
-      </div>
-    </div>
+      </CardContent>
+
+      <CardFooter className="pt-0 flex-col items-stretch gap-4 pb-5">
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onLike(post.id)}
+            className={`rounded-full shadow-none border-border/50 text-xs gap-2 transition-colors ${liked ? "bg-red-500/15 border-red-500/30 text-red-600 hover:bg-red-500/25 hover:text-red-700" : "hover:bg-primary/5"}`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${liked ? "fill-red-500" : ""}`} />
+            {post.likes}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setOpen(o => !o)}
+            className="rounded-full shadow-none border-border/50 text-xs gap-2 hover:bg-primary/5"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            {post.comments.length}
+          </Button>
+        </div>
+        {open && <CommentSection comments={post.comments} onAdd={(c) => onComment(post.id, c)} />}
+      </CardFooter>
+    </Card>
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ConfessionBoard({ onClose }) {
-  const [dark, setDark] = useState(true);
   const [posts, setPosts] = useState([]);
   const [showNew, setShowNew] = useState(false);
   const [activeTag, setActiveTag] = useState("all");
   const [sort, setSort] = useState("new");
   const [search, setSearch] = useState("");
-  const width = useWindowWidth();
+  
+  // New post modal state
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tag, setTag] = useState("feelings");
+
+  // Sync dark mode class on document element so shadcn colors shift correctly
+  const [isDark, setIsDark] = useState(true);
+  useEffect(() => {
+    if (isDark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [isDark]);
 
   const [sessionId] = useState(() => {
     let sid = localStorage.getItem("confession_sid");
@@ -338,11 +200,9 @@ export default function ConfessionBoard({ onClose }) {
       .catch(e => console.error(e));
   }, [sessionId]);
 
-  const t = getTheme(dark);
-  const isDesktop = width >= 1024;
-  const isTablet  = width >= 640 && width < 1024;
-
-  async function handleNewPost({ title, body, tag }) {
+  async function handleNewPost(e) {
+    if (e) e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
     try {
       const res = await fetch("http://127.0.0.1:8000/api/confessions/", {
         method: "POST",
@@ -358,6 +218,8 @@ export default function ConfessionBoard({ onClose }) {
             comments: []
         };
         setPosts(prev => [mappedPost, ...prev]);
+        setShowNew(false);
+        setTitle(""); setBody(""); setTag("feelings");
       }
     } catch(e) { console.error(e); }
   }
@@ -382,7 +244,7 @@ export default function ConfessionBoard({ onClose }) {
       const res = await fetch(`http://127.0.0.1:8000/api/confessions/${id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ author: commentData.author, text: commentData.body })
+        body: JSON.stringify(commentData)
       });
       if (res.ok) {
         const c = await res.json();
@@ -402,120 +264,198 @@ export default function ConfessionBoard({ onClose }) {
     .filter(p => !search.trim() || p.title.toLowerCase().includes(search.toLowerCase()) || p.body.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sort === "top" ? b.likes - a.likes : b.ts - a.ts);
 
+  const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-        *, *::before, *::after { box-sizing: border-box; }
-        .wb-root { transition: background 0.3s; }
-        .wb-root::-webkit-scrollbar { width: 5px; }
-        .wb-root::-webkit-scrollbar-track { background: transparent; }
-        .wb-root::-webkit-scrollbar-thumb { background: ${t.scrollThumb}; border-radius: 5px; }
-        textarea, input { font-family: inherit; }
-      `}</style>
-
-      {/* Root */}
-      <div className="wb-root" style={{ position: "fixed", inset: 0, zIndex: 50, background: t.pageBg, overflowY: "auto" }}>
-
-        {/* Ambient blobs */}
-        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
-          <div style={{ position: "absolute", top: "-10%", left: "-5%",  width: 700, height: 700, borderRadius: "50%", background: `radial-gradient(circle,${t.blob1},transparent 65%)`, filter: "blur(60px)" }} />
-          <div style={{ position: "absolute", bottom: "-5%", right: "-5%", width: 600, height: 600, borderRadius: "50%", background: `radial-gradient(circle,${t.blob2},transparent 65%)`, filter: "blur(60px)" }} />
-          <div style={{ position: "absolute", top: "40%",  left: "50%",  width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle,${t.blob3},transparent 65%)`, filter: "blur(60px)" }} />
-        </div>
-
-        {/* Layout */}
-        <div style={{
-          position: "relative", zIndex: 1,
-          maxWidth: isDesktop ? 1280 : isTablet ? 900 : 600,
-          margin: "0 auto",
-          padding: isDesktop ? "32px 40px" : isTablet ? "24px 28px" : "16px 16px",
-          display: isDesktop ? "grid" : "block",
-          gridTemplateColumns: isDesktop ? "260px 1fr" : undefined,
-          gap: isDesktop ? 28 : undefined,
-          alignItems: "start",
-        }}>
-
-          {/* ── Sidebar (desktop) / Top bar (mobile+tablet) ── */}
-          {isDesktop ? (
-            <div style={{ position: "sticky", top: 32 }}>
-              <Sidebar posts={posts} activeTag={activeTag} setActiveTag={setActiveTag} dark={dark} setDark={setDark} onClose={onClose} setShowNew={setShowNew} t={t} />
-            </div>
-          ) : (
-            <div style={{ marginBottom: 20 }}>
-              {/* Mobile header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: t.heading, fontFamily: "'Lora',serif" }}>🕯️ Whisper Board</h1>
-                  <p style={{ margin: "2px 0 0", fontSize: 10, color: t.sub, fontFamily: "'DM Mono',monospace" }}>anonymous · no login · no trace</p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => setDark(d => !d)} style={{ background: t.closeBg, border: `1px solid ${t.closeBorder}`, borderRadius: 9, padding: "7px 12px", color: t.heading, fontSize: 12, cursor: "pointer" }}>{dark ? "☀️" : "🌙"}</button>
-                  {onClose && <button onClick={onClose} style={{ background: t.closeBg, border: `1px solid ${t.closeBorder}`, borderRadius: 9, padding: "7px 12px", color: t.closeColor, fontSize: 12, cursor: "pointer" }}>✕</button>}
-                  <button onClick={() => setShowNew(true)} style={{ background: t.accentBtnBg, border: "none", borderRadius: 9, padding: "7px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>+ Confess</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Main feed ── */}
-          <div>
-            {/* Search + sort */}
-            <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center" }}>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search confessions…"
-                style={{ flex: 1, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 11, padding: "10px 16px", color: t.heading, fontSize: 13, outline: "none" }} />
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                {["new","top"].map(s => (
-                  <button key={s} onClick={() => setSort(s)} style={{ background: sort === s ? t.sortActiveBg : t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 9, padding: "9px 14px", color: sort === s ? t.sortColor : t.sub, fontSize: 12, cursor: "pointer", fontWeight: sort === s ? 700 : 400, fontFamily: "'DM Mono',monospace" }}>
-                    {s === "new" ? "🕐 New" : "🔥 Top"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tag filter pills (mobile/tablet only — desktop uses sidebar) */}
-            {!isDesktop && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                <button onClick={() => setActiveTag("all")} style={{ background: activeTag === "all" ? t.sortActiveBg : t.tagInactiveBg, border: `1px solid ${t.tagInactiveBorder}`, borderRadius: 99, padding: "4px 12px", color: activeTag === "all" ? t.sortColor : t.tagInactiveColor, fontSize: 11, cursor: "pointer", fontWeight: activeTag === "all" ? 700 : 400 }}>all</button>
-                {TAGS.map(tg => (
-                  <button key={tg} onClick={() => setActiveTag(tg === activeTag ? "all" : tg)} style={{ background: activeTag === tg ? t.tagActiveBg(TAG_COLORS[tg]) : t.tagInactiveBg, border: `1px solid ${activeTag === tg ? TAG_COLORS[tg]+"55" : t.tagInactiveBorder}`, borderRadius: 99, padding: "4px 10px", color: activeTag === tg ? t.tagActiveColor(TAG_COLORS[tg]) : t.tagInactiveColor, fontSize: 11, cursor: "pointer", fontWeight: activeTag === tg ? 700 : 400, textTransform: "uppercase", letterSpacing: "0.04em" }}>{tg}</button>
-                ))}
-              </div>
-            )}
-
-            {/* Active filter label */}
-            {activeTag !== "all" && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <TagPill tag={activeTag} />
-                <span style={{ fontSize: 12, color: t.sub }}>{filtered.length} post{filtered.length !== 1 ? "s" : ""}</span>
-                <button onClick={() => setActiveTag("all")} style={{ background: "none", border: "none", color: t.sub, fontSize: 11, cursor: "pointer", fontFamily: "'DM Mono',monospace" }}>clear ✕</button>
-              </div>
-            )}
-
-            {/* Posts grid — 2 cols on large desktop */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isDesktop && width >= 1200 ? "1fr 1fr" : "1fr",
-              gap: 14,
-            }}>
-              {filtered.length === 0 ? (
-                <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "64px 0", color: t.sub }}>
-                  <div style={{ fontSize: 40, marginBottom: 10 }}>🌑</div>
-                  <p style={{ fontSize: 14 }}>No confessions here yet. Be the first.</p>
-                </div>
-              ) : filtered.map(post => (
-                <PostCard key={post.id} post={post} onLike={handleLike} onComment={handleComment} t={t} />
-              ))}
-            </div>
-
-            <p style={{ textAlign: "center", marginTop: 40, fontSize: 10, color: t.sub, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              no data stored · no accounts · just whispers
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-500 font-sans selection:bg-primary/20">
+      
+      {/* Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 blur-[100px]" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[500px] h-[500px] rounded-full bg-pink-500/10 dark:bg-pink-500/15 blur-[100px]" />
       </div>
 
-      {showNew && <NewPostModal onClose={() => setShowNew(false)} onSubmit={handleNewPost} t={t} />}
-    </>
+      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-8">
+        
+        {/* Left Sidebar */}
+        <aside className="w-full lg:w-72 lg:shrink-0 flex flex-col gap-6 lg:sticky lg:top-8 h-fit">
+          <Card className="border-border/40 bg-card/60 backdrop-blur-xl shadow-lg shadow-indigo-500/5">
+            <CardHeader className="pb-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-500" /> Whispers
+                  </h1>
+                  <p className="text-xs text-muted-foreground font-mono mt-1 uppercase tracking-wider">anonymous space</p>
+                </div>
+                {onClose && (
+                  <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8 -mr-2">
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-xl p-3 text-center border border-border/50">
+                  <div className="text-2xl font-black text-foreground">{posts.length}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-1">Posts</div>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3 text-center border border-border/50">
+                  <div className="text-2xl font-black text-foreground">{posts.reduce((a, p) => a + p.likes, 0)}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-1">Hearts</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dialog for New Post */}
+          <Dialog open={showNew} onOpenChange={setShowNew}>
+            <DialogTrigger asChild>
+              <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xl shadow-indigo-600/20 font-semibold tracking-wide transition-all active:scale-95">
+                Drop a Confession
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-3xl border-border/50 rounded-3xl p-8">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold font-serif">Leave your mark.</DialogTitle>
+                <DialogDescription className="font-mono text-xs">
+                  No trace. No login. True anonymity.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleNewPost} className="space-y-6 mt-2">
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map(tg => (
+                    <button 
+                      key={tg} 
+                      type="button" 
+                      onClick={() => setTag(tg)} 
+                      className={`px-3 py-1 text-xs rounded-full border transition-all uppercase tracking-wider font-semibold ${
+                        tag === tg 
+                          ? TAG_COLORS[tg] + " ring-2 ring-primary/20 ring-offset-2 ring-offset-background" 
+                          : "bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted"
+                      }`}
+                    >
+                      {tg}
+                    </button>
+                  ))}
+                </div>
+                <Input 
+                  value={title} 
+                  onChange={e => setTitle(e.target.value)} 
+                  placeholder="Give it a title..." 
+                  maxLength={100}
+                  className="text-base font-semibold border-border/50 focus-visible:ring-indigo-500/50 rounded-xl h-12 bg-muted/20"
+                />
+                <Textarea 
+                  value={body} 
+                  onChange={e => setBody(e.target.value)} 
+                  placeholder="What's heavily weighing on your mind?" 
+                  rows={5}
+                  className="resize-none text-sm leading-relaxed border-border/50 focus-visible:ring-indigo-500/50 rounded-xl bg-muted/20"
+                />
+                <Button 
+                  type="submit" 
+                  disabled={!title.trim() || !body.trim()}
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-base shadow-lg shadow-indigo-600/25 transition-all text-white"
+                >
+                  Post Confession
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Card className="border-border/40 bg-card/60 backdrop-blur-xl shadow-lg shadow-indigo-500/5 hidden lg:block">
+            <CardHeader className="pb-3 pt-5">
+              <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground">Categories</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-1 pb-5">
+              <Button 
+                variant="ghost" 
+                onClick={() => setActiveTag("all")} 
+                className={`justify-between rounded-lg h-9 px-3 ${activeTag === "all" ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"}`}
+              >
+                All feeds 
+                <span className="opacity-50 text-xs font-mono">{posts.length}</span>
+              </Button>
+              {TAGS.map(tg => {
+                const count = posts.filter(p => p.tag === tg).length;
+                if (count === 0) return null;
+                return (
+                  <Button 
+                    key={tg}
+                    variant="ghost" 
+                    onClick={() => setActiveTag(tg)} 
+                    className={`justify-between rounded-lg h-9 px-3 ${activeTag === tg ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"}`}
+                  >
+                    <span className="capitalize">{tg}</span>
+                    <span className="opacity-50 text-xs font-mono">{count}</span>
+                  </Button>
+                );
+              })}
+            </CardContent>
+          </Card>
+          
+          <Button variant="outline" onClick={() => setIsDark(!isDark)} className="rounded-xl border-border/50 shadow-none hidden lg:flex items-center gap-2 text-muted-foreground">
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            Toggle Theme
+          </Button>
+
+        </aside>
+
+        {/* Main Feed Content */}
+        <main className="flex-1 max-w-3xl lg:max-w-none ml-auto mr-auto w-full">
+          
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+              <Input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                placeholder="Search confessions..." 
+                className="pl-10 h-12 bg-card/60 backdrop-blur-md border-border/40 rounded-xl shadow-sm focus-visible:ring-indigo-500/30"
+              />
+            </div>
+            <div className="flex bg-card/60 backdrop-blur-md border border-border/40 rounded-xl p-1 shrink-0 h-12">
+              <Button onClick={() => setSort("new")} variant="ghost" size="sm" className={`rounded-lg flex-1 ${sort === "new" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}>New</Button>
+              <Button onClick={() => setSort("top")} variant="ghost" size="sm" className={`rounded-lg flex-1 ${sort === "top" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"}`}>Top</Button>
+            </div>
+          </div>
+
+          <div className="lg:hidden">
+            <ScrollArea className="w-full whitespace-nowrap mb-6 pb-2">
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setActiveTag("all")} className={`rounded-full shadow-none ${activeTag === "all" ? "bg-primary/10 border-primary/20 text-primary" : ""}`}>All feeds</Button>
+                {TAGS.map(tg => {
+                  const count = posts.filter(p => p.tag === tg).length;
+                  if (count === 0) return null;
+                  return (
+                    <Button key={tg} size="sm" variant="outline" onClick={() => setActiveTag(tg)} className={`rounded-full shadow-none capitalize ${activeTag === tg ? "bg-primary/10 border-primary/20 text-primary" : ""}`}>{tg}</Button>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                  <Moon className="w-8 h-8 text-muted-foreground/50" />
+                </div>
+                <h3 className="text-lg font-bold">Nothing here yet</h3>
+                <p className="text-muted-foreground text-sm mt-1 max-w-[200px]">Be the first to leave a whisper in this empty space.</p>
+              </div>
+            ) : filtered.map(post => (
+              <PostCard key={post.id} post={post} onLike={handleLike} onComment={handleComment} />
+            ))}
+          </div>
+          
+          <div className="text-center mt-12 mb-8">
+            <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/50">End of records</p>
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }
