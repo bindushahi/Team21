@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { loginUser, verifyOtp } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../i18n";
 
 export default function Login({ onSwitch }) {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -53,27 +55,23 @@ export default function Login({ onSwitch }) {
         <div className="w-full max-w-sm bg-white/30 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-black tracking-tight">
-              Enter OTP
+              {t("auth_enter_otp")}
             </h1>
             <p className="text-sm text-black/80 mt-1">
-              {sentVia === "sms"
-                ? "A 6-digit code has been sent to your phone"
-                : "A 6-digit code has been generated for you"}
+              {sentVia === "sms" ? t("auth_otp_sent_sms") : t("auth_otp_generated")}
             </p>
           </div>
 
           {sentVia === "sms" && (
             <div className="bg-emerald-50/30 border border-emerald-200/40 rounded-lg px-3 py-2 mb-4">
-              <p className="text-xs text-emerald-700">
-                Check your phone for the SMS verification code
-              </p>
+              <p className="text-xs text-emerald-700">{t("auth_check_phone")}</p>
             </div>
           )}
 
           {demoOtp && (
             <div className="bg-amber-50/30 border border-amber-200/40 rounded-lg px-3 py-2 mb-4">
               <p className="text-xs text-amber-700">
-                Demo mode — your OTP is:{" "}
+                {t("auth_demo_otp")}{" "}
                 <span className="font-mono font-bold">{demoOtp}</span>
               </p>
             </div>
@@ -101,7 +99,7 @@ export default function Login({ onSwitch }) {
               disabled={loading || otp.length < 6}
               className="w-full py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors"
             >
-              {loading ? "Verifying..." : "Verify"}
+              {loading ? t("auth_verifying") : t("auth_verify")}
             </button>
           </form>
 
@@ -116,7 +114,7 @@ export default function Login({ onSwitch }) {
               }}
               className="text-black font-medium hover:underline"
             >
-              Back to sign in
+              {t("auth_back_signin")}
             </button>
           </p>
         </div>
@@ -133,32 +131,32 @@ export default function Login({ onSwitch }) {
       <div className="w-full max-w-sm bg-white/30 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-semibold text-black tracking-tight">
-            हाम्रो विद्यार्थी
+            {t("app_title")}
           </h1>
-          <p className="text-sm text-black/80 mt-1">Keeping student wellbeing first</p>
+          <p className="text-sm text-black/80 mt-1">{t("app_subtitle")}</p>
         </div>
 
         <form onSubmit={handlePassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-black/90 mb-1">Email</label>
+            <label className="block text-sm font-medium text-black/90 mb-1">{t("auth_email")}</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
-              placeholder="you@school.edu.np"
+              placeholder={t("auth_email_placeholder")}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black/90 mb-1">Password</label>
+            <label className="block text-sm font-medium text-black/90 mb-1">{t("auth_password")}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-3 py-2.5 border border-black/40 rounded-lg text-sm text-black placeholder-gray/70 focus:outline-none focus:border-white/80 bg-white/10"
-              placeholder="Enter your password"
+              placeholder={t("auth_password_placeholder")}
             />
           </div>
 
@@ -171,14 +169,14 @@ export default function Login({ onSwitch }) {
             disabled={loading}
             className="w-full py-2.5 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-black disabled:opacity-50 transition-colors"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t("auth_signing_in") : t("auth_sign_in")}
           </button>
         </form>
 
         <p className="text-center text-sm text-black/70 mt-6">
-          Don't have an account?{" "}
+          {t("auth_no_account")}{" "}
           <button onClick={onSwitch} className="text-blue-600 font-medium hover:underline">
-            Register
+            {t("auth_register")}
           </button>
         </p>
       </div>

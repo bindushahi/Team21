@@ -35,4 +35,51 @@ body {
 .animate-pulse-slow {
   animation: pulse-slow 2s ease-in-out infinite;
 }
+
+/* Print styles for student report */
+@media print {
+  /* Hide sidebar and non-printable elements */
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Make main content full width */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  main > div {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Clean backgrounds for print */
+  body,
+  .min-h-screen,
+  .bg-white\/70,
+  .bg-white\/90 {
+    background: white !important;
+  }
+
+  .backdrop-blur-sm,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+  }
+
+  /* Ensure sections are expanded and visible */
+  .rounded-2xl {
+    break-inside: avoid;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+}
  
