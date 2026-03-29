@@ -35,14 +35,7 @@ function useWindowWidth() {
   return w;
 }
 
-const SEED_POSTS = [
-  { id: genId(), author: "Hollow Moon",     tag: "feelings", title: "I cry in the bathroom between classes",       body: "Nobody knows. I just needed to say it somewhere. Some days the weight of pretending to be okay is heavier than anything.", likes: 42, comments: [], ts: Date.now() - 3600000*2 },
-  { id: genId(), author: "Silent Sparrow",  tag: "school",   title: "I haven't done homework in 3 weeks",          body: "And somehow I'm still passing. I don't know how I feel about that. Guilty? Relieved? Both?", likes: 87, comments: [], ts: Date.now() - 3600000*5 },
-  { id: genId(), author: "Wandering Cloud", tag: "secret",   title: "I lied about where I was last night",         body: "I just needed a few hours alone. Is that so bad? I love everyone around me but sometimes the silence is the only thing that feels real.", likes: 31, comments: [], ts: Date.now() - 86400000 },
-  { id: genId(), author: "Broken Compass",  tag: "friends",  title: "My best friend doesn't know I'm struggling",  body: "We talk every day and I still haven't told them. I don't know why. Maybe I don't want to change how they see me.", likes: 54, comments: [], ts: Date.now() - 86400000*2 },
-  { id: genId(), author: "Gentle Ghost",    tag: "love",     title: "I still think about them every single day",   body: "It's been eight months. I thought it would fade. It hasn't. Every song, every smell. I'm so tired of it.", likes: 119, comments: [], ts: Date.now() - 86400000*3 },
-  { id: genId(), author: "Paper Crane",     tag: "rant",     title: "Why does nobody talk about how exhausting school actually is", body: "Not the work. The performance. Smiling, being ON, making people comfortable. I go home and I have nothing left.", likes: 76, comments: [], ts: Date.now() - 86400000*4 },
-];
+// SEED_POSTS removed - fetching from backend
 
 // ── theme ─────────────────────────────────────────────────────────────────────
 function getTheme(dark) {
@@ -161,7 +154,7 @@ function CommentSection({ comments, onAdd, t }) {
 // ── PostCard ──────────────────────────────────────────────────────────────────
 function PostCard({ post, onLike, onComment, t }) {
   const [open, setOpen] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const liked = post.liked || false;
 
   return (
     <div
@@ -190,7 +183,7 @@ function PostCard({ post, onLike, onComment, t }) {
       )}
 
       <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
-        <button onClick={() => { if (!liked) { setLiked(true); onLike(post.id); } }} style={{ background: liked ? t.likedBg : t.inputBg, border: `1px solid ${liked ? t.likedBorder : t.inputBorder}`, borderRadius: 99, padding: "5px 14px", color: liked ? "#dc2626" : t.sub, fontSize: 12, cursor: liked ? "default" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", fontFamily: "'DM Mono',monospace" }}>
+        <button onClick={() => onLike(post.id)} style={{ background: liked ? t.likedBg : t.inputBg, border: `1px solid ${liked ? t.likedBorder : t.inputBorder}`, borderRadius: 99, padding: "5px 14px", color: liked ? "#dc2626" : t.sub, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", fontFamily: "'DM Mono',monospace" }}>
           {liked ? "♥" : "♡"} {post.likes}
         </button>
         <button onClick={() => setOpen(o => !o)} style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 99, padding: "5px 14px", color: t.sub, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "'DM Mono',monospace" }}>
@@ -311,25 +304,97 @@ function Sidebar({ posts, activeTag, setActiveTag, dark, setDark, onClose, setSh
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ConfessionBoard({ onClose }) {
   const [dark, setDark] = useState(true);
-  const [posts, setPosts] = useState(SEED_POSTS);
+  const [posts, setPosts] = useState([]);
   const [showNew, setShowNew] = useState(false);
   const [activeTag, setActiveTag] = useState("all");
   const [sort, setSort] = useState("new");
   const [search, setSearch] = useState("");
   const width = useWindowWidth();
 
+  const [sessionId] = useState(() => {
+    let sid = localStorage.getItem("confession_sid");
+    if (!sid) {
+      sid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem("confession_sid", sid);
+    }
+    return sid;
+  });
+
+  useEffect(() => {
+    fetch(`http://127.0.0.1:8000/api/confessions/?session_id=${sessionId}`)
+      .then(res => res.json())
+      .then(data => {
+        const mapped = data.map(p => ({
+            ...p,
+            ts: new Date(p.created_at).getTime(),
+            comments: p.comments.map(c => ({
+                 ...c,
+                 body: c.text,
+                 ts: new Date(c.created_at).getTime()
+            }))
+        }));
+        setPosts(mapped);
+      })
+      .catch(e => console.error(e));
+  }, [sessionId]);
+
   const t = getTheme(dark);
   const isDesktop = width >= 1024;
   const isTablet  = width >= 640 && width < 1024;
 
-  function handleNewPost({ title, body, tag }) {
-    setPosts(prev => [{ id: genId(), author: randomAnon(), tag, title, body, likes: 0, comments: [], ts: Date.now() }, ...prev]);
+  async function handleNewPost({ title, body, tag }) {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/confessions/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ author: randomAnon(), title, body, tag })
+      });
+      if (res.ok) {
+        const newPost = await res.json();
+        const mappedPost = {
+            ...newPost,
+            ts: new Date(newPost.created_at).getTime(),
+            liked: false,
+            comments: []
+        };
+        setPosts(prev => [mappedPost, ...prev]);
+      }
+    } catch(e) { console.error(e); }
   }
-  function handleLike(id) {
-    setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p));
+
+  async function handleLike(id) {
+    setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: p.liked ? p.likes - 1 : p.likes + 1, liked: !p.liked } : p));
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/confessions/${id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: data.likes, liked: data.liked } : p));
+      }
+    } catch(e) { console.error(e); }
   }
-  function handleComment(id, comment) {
-    setPosts(prev => prev.map(p => p.id === id ? { ...p, comments: [...p.comments, comment] } : p));
+
+  async function handleComment(id, commentData) {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/confessions/${id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ author: commentData.author, text: commentData.body })
+      });
+      if (res.ok) {
+        const c = await res.json();
+        const mappedComment = {
+            id: c.id,
+            author: c.author,
+            body: c.text,
+            ts: new Date(c.created_at).getTime()
+        };
+        setPosts(prev => prev.map(p => p.id === id ? { ...p, comments: [...p.comments, mappedComment] } : p));
+      }
+    } catch(e) { console.error(e); }
   }
 
   const filtered = posts
