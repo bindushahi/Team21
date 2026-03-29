@@ -58,7 +58,7 @@ function CommentSection({ comments, onAdd }) {
   }
   return (
     <div className="mt-5 pt-4 border-t border-border/40 animate-slide-in">
-      <ScrollArea className="max-h-56 pr-3">
+      <div className="max-h-80 overflow-y-auto pr-2 custom-scroll">
         {comments.length === 0 ? (
           <p className="text-xs text-muted-foreground/60 italic my-2 text-center font-serif">No whispers yet. Add yours...</p>
         ) : (
@@ -79,7 +79,7 @@ function CommentSection({ comments, onAdd }) {
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
       <form onSubmit={submit} className="flex gap-2 mt-4 relative">
         <input 
           className="bg-card/50 w-full h-10 border border-border/50 focus-visible:ring-1 focus-visible:ring-primary/40 focus:outline-none rounded-full pl-5 pr-[80px] text-[13px] shadow-sm transition-all" 
@@ -100,7 +100,7 @@ function PostCard({ post, onLike, onComment }) {
   const liked = post.liked || false;
 
   return (
-    <div className="rounded-[24px] border border-border/60 bg-card/60 backdrop-blur-3xl shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-500 overflow-hidden flex flex-col group animate-slide-in relative">
+    <div className="rounded-[24px] border border-border/60 bg-white/80 dark:bg-card/60 backdrop-blur-3xl shadow-md dark:shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-500 overflow-hidden flex flex-col group animate-slide-in relative">
       
       {/* Header */}
       <div className="pb-3 pt-6 px-6">
@@ -270,12 +270,12 @@ export default function ConfessionBoard({ onClose }) {
     .sort((a, b) => sort === "top" ? b.likes - a.likes : b.ts - a.ts);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-700 font-sans selection:bg-primary/30 selection:text-primary relative">
+    <div className={`min-h-screen ${isDark ? 'bg-background' : 'bg-[#f1f5f9]'} text-foreground transition-colors duration-700 font-sans selection:bg-primary/30 selection:text-primary relative`}>
       
       {/* ── Ambient Orbs ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 mix-blend-screen dark:mix-blend-lighten">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] md:w-[800px] md:h-[800px] rounded-full bg-indigo-500/10 dark:bg-indigo-600/15 blur-[100px] md:blur-[140px] animate-pulse-slow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full bg-pink-500/10 dark:bg-pink-600/10 blur-[100px] md:blur-[140px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] md:w-[800px] md:h-[800px] rounded-full bg-indigo-500/5 dark:bg-indigo-600/15 blur-[100px] md:blur-[140px] animate-pulse-slow" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full bg-pink-500/5 dark:bg-pink-600/10 blur-[100px] md:blur-[140px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
         <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-cyan-400/5 dark:bg-cyan-500/10 blur-[100px] animate-pulse-slow" style={{ animationDelay: '1s' }} />
       </div>
 
@@ -500,7 +500,7 @@ export default function ConfessionBoard({ onClose }) {
           {filtered.length > 0 && (
             <div className="text-center mt-16 mb-12 flex items-center justify-center gap-4">
               <div className="h-[1px] w-12 bg-border/50" />
-              <p className="text-[10px] font-mono uppercase tracking-[0.2em] font-bold text-muted-foreground/30">End of records</p>
+              <p className="text-[14px] font-mono uppercase tracking-[0.2em] font-bold text-muted-foreground/30">Every story matters—share what’s on your mind.</p>
               <div className="h-[1px] w-12 bg-border/50" />
             </div>
           )}
